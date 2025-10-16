@@ -67,7 +67,7 @@ void ChangeSigDist(double sigDist=-1);
 #define q ChangeSigDist();
 
 ////////////////////////////////////////////////////////////
-void draw_from_tree()
+void draw_beam_pid()
 {
     Init();
     ListFiles(true);
