@@ -1,92 +1,29 @@
-////////////////////////////////////////////////////////////
-bool fUse2D = true;
-bool fUse3D = false;
-bool fUseLogz = false;
-LKDrawingGroup *fTop = nullptr, *fGroupFit = nullptr, *fGroupPID = nullptr;
-LKDrawing *fDrawPID = nullptr, *fDraw2D = nullptr, *fDraw3D = nullptr;
-TObjArray *fHistDataArray = nullptr, *fHistFitGArray = nullptr, *fHistBackArray = nullptr, *fHistTestArray = nullptr, *fHistErrrArray = nullptr;
-TObjArray* fFitArray = nullptr;
-TObjArray* fContourGraphArray = nullptr;
-vector<TString> fListGenFile;
-TFile* fDataFile = nullptr;
-TTree* fDataTree = nullptr;
-TH2D *fHistPID = nullptr;
-bool fRunCollected = false, fInitialized = false;
-int fCurrentRunNumber, fCurrentType;
-double fSigDist = 1;
-int fNumContours = 10;
-LKBinning fBnn2, fBnn3;
-TString fCurrentFileName;
-double fFinalContourAScale = 0.2;
-TGraph* fFinalContourGraph = nullptr;
-double fContourScaleList[] = {0.9,0.5,0.2};
-TString fFormulaRotated2DGaussian = "[0]*exp(-0.5*(pow(((x-[1])*cos([5])+(y-[3])*sin([5]))/[2],2)+pow((-(x-[1])*sin([5])+(y-[3])*cos([5]))/[4],2)))";
+#include "include/draw_beam_pid.h"
 
-////////////////////////////////////////////////////////////
-void ResetBinning();
-void SetBinningX(int nx, double x1, double x2, int fill=1);
-void SetBinningY(int ny, double y1, double y2, int fill=1);
-void SetBinningX(double x1, double x2, int fill=1);
-void SetBinningY(double y1, double y2, int fill=1);
-void SetBinning(int nx, double x1, double x2, int ny, double y1, double y2);
-void SetBinning(double x1, double x2, double y1, double y2);
-void SetBinWX(double w, int fill=1);
-void SetBinWY(double w, int fill=1);
-void SetBinNX(double n, int fill=1);
-void SetBinNY(double n, int fill=1);
-void SaveBinning();
-
-////////////////////////////////////////////////////////////
-void Init();
-void Guide(TString mode);
-bool ListFiles(bool newList=false, TString path="data", TString format="gen.root");
-bool SelectFile(int idx=-1);
-void CreateAndFillHistogram(int printb=1);
-void DrawPoints(int redraw=0, vector<vector<double>> points=vector<vector<double>>{});
-LKDrawing* GetFitTestDrawing(int i, TH2D *hist, TF2* fit, TF2* fitContanminent=(TF2*)nullptr);
-void FitTotal();
-void MakeSummary();
-TF2* Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY, double sigmaX=2.5, double sigmaY=1.5, double theta=21);
-TGraph *GetContourGraph(double contoA, double amplit, double valueX, double sigmaX, double valueY, double sigmaY, double thetaR);
-double IntegralInsideGraph(TH2D* hist, TGraph* graph, bool justCount=true);
-double IntegralInsideGraph(TH2D* hist, TGraph* graph, TF2 *f2, bool justCount=true);
-double Integral2DGaussian(double amplitude, double sigma_x, double sigma_y, double contoA=0);
-double Integral2DGaussian(TF2 *f2, double contoA=0);
-void CollectRootFiles(std::vector<TString> &listGenFile, const char *dataPath="data", const TString &format="gen.root");
-void ChangeSigDist(double sigDist=-1);
-#define a ListFiles();
-#define s SelectFile();
-#define d DrawPoints();
-#define t DrawPoints(2);
-#define r DrawPoints(1);
-#define f FitTotal();
-#define g MakeSummary();
-#define i Guide("i");
-#define v SaveBinning();
-#define b ResetBinning();
-#define q ChangeSigDist();
-
-////////////////////////////////////////////////////////////
 void draw_beam_pid()
 {
     Init();
     ListFiles(true);
-    fTop = new LKDrawingGroup();
-    fGroupFit = fTop -> CreateGroup(Form("event_fit_%04d",fCurrentRunNumber));
-    fGroupPID = fTop -> CreateGroup(Form("event_pid_%04d",fCurrentRunNumber));
-    fDrawPID = fGroupPID -> CreateDrawing(Form("draw_pid_%04d",fCurrentRunNumber),false);
-    fDraw2D = fGroupPID -> CreateDrawing(Form("draw_2d_%04d",fCurrentRunNumber));
-    fDraw3D = fGroupPID -> CreateDrawing(Form("draw_3d_%04d",fCurrentRunNumber),fUse3D);
-    fGroupPID -> SetCanvasSize(1+int(fUse3D),1,1);
-    fDraw2D -> SetCanvasMargin(.10,.10,.10,.10);
-    //fDraw3D -> SetCanvasMargin(.10,.15,.10,.15);
-    if (fUseLogz) fDraw2D -> SetLogz();
 
-    if (1) {
+    if (1)
+    {
         fBnn2.SetNMM(120,-946,-907, 120,109,147);
         fBnn3.SetNMM(120,-946,-907, 120,109,147);
         SelectFile(0);
+        //DrawPoints(0,vector<vector<double>>{vector<double>{-927.581, 130.787},vector<double>{-934.872649, 125.220195}});
         DrawPoints(0,vector<vector<double>>{vector<double>{-927.581, 130.787},vector<double>{-934.872649, 125.220195},vector<double>{-927.581, 124}});
+        FitTotal();
+        MakeSummary();
+    }
+
+    if (1)
+    {
+        fBnn2.SetNMM(120,-1010,-970, 120,110,145);
+        fBnn3.SetNMM(120,-1010,-970, 120,110,145);
+        SelectFile(0);
+        //DrawPoints(0,vector<vector<double>>{vector<double>{-980.443,115.734}, vector<double>{-990.202,117.449}, vector<double>{-998.737,119.335}, vector<double>{-998.737,119.335}, vector<double>{-990.242,124.766}, vector<double>{-990.242,131.911},});
+        DrawPoints(0,vector<vector<double>>{vector<double>{-980.443,115.734}, vector<double>{-990.202,117.449}, vector<double>{-998.737,119.335}, vector<double>{-990.242,124.766}});
+        //DrawPoints(0,vector<vector<double>>{vector<double>{-980.443,115.734}, vector<double>{-990.202,117.449}, vector<double>{-998.737,119.335}, vector<double>{-998.737,119.335}});
         FitTotal();
         MakeSummary();
     }
@@ -94,7 +31,8 @@ void draw_beam_pid()
 
 void Init()
 {
-    gStyle -> SetOptStat("ne");
+    gStyle -> SetNumberContours(100);
+    gStyle -> SetOptStat("e");
     ResetBinning();
     fFitArray = new TObjArray();
     fHistDataArray = new TObjArray();
@@ -102,6 +40,15 @@ void Init()
     fHistBackArray = new TObjArray();
     fHistTestArray = new TObjArray();
     fHistErrrArray = new TObjArray();
+    fTop = new LKDrawingGroup();
+    fGroupFit = fTop -> CreateGroup(Form("event_fit_%04d",fCurrentRunNumber));
+    fGroupPID = fTop -> CreateGroup(Form("event_pid_%04d",fCurrentRunNumber));
+    fDraw2D = fGroupPID -> CreateDrawing(Form("draw_2d_%04d",fCurrentRunNumber));
+    fDraw3D = fGroupPID -> CreateDrawing(Form("draw_3d_%04d",fCurrentRunNumber),fUse3D);
+    fGroupPID -> SetCanvasSize(1+int(fUse3D),1,1);
+    fDraw2D -> SetCanvasMargin(.11,.15,.11,0.08);
+    fDraw3D -> SetCanvasMargin(.10,.10,.10,.10);
+    if (fUseLogz) fDraw2D -> SetLogz();
 }
 
 void CollectRootFiles(std::vector<TString> &listGenFile, const char *dataPath, const TString &format)
@@ -131,7 +78,7 @@ void CollectRootFiles(std::vector<TString> &listGenFile, const char *dataPath, c
 
 bool ListFiles(bool newList, TString path, TString format)
 {
-    e_info << "ListFiles" << endl;
+    e_title << "ListFiles" << endl;
     if (!fRunCollected || newList) {
         CollectRootFiles(fListGenFile,path,format);
         fRunCollected = true;
@@ -164,23 +111,26 @@ void CreateAndFillHistogram(int printb)
     }
     if (fDataTree) {
         Long64_t entriesTotal;
-        if (fCurrentType==2) fHistPID = fBnn2.NewH2(Form("histPID_%04d",fCurrentRunNumber),"f2ssde:rf0");
-        if (fCurrentType==3) fHistPID = fBnn3.NewH2(Form("histPID_%04d",fCurrentRunNumber),"f3ssde:rf0");
+        //if (fCurrentType==2) fHistPID = fBnn2.NewH2(Form("histPID_%04d",fCurrentRunNumber),"f2ssde:rf0");
+        //if (fCurrentType==3) fHistPID = fBnn3.NewH2(Form("histPID_%04d",fCurrentRunNumber),"f3ssde:rf0");
+        if (fCurrentType==2) fHistPID = fBnn2.NewH2(Form("histPID_%04d",fCurrentRunNumber),";rf0;f2ssde");
+        if (fCurrentType==3) fHistPID = fBnn3.NewH2(Form("histPID_%04d",fCurrentRunNumber),";rf0;f3ssde");
         if (fCurrentType==2) entriesTotal = fDataTree->Draw(Form("f2ssde:rf0>>%s",fHistPID->GetName()),"","goff");
         if (fCurrentType==3) entriesTotal = fDataTree->Draw(Form("f3ssde:rf0>>%s",fHistPID->GetName()),"","goff");
-        e_info << "Total entries = " << entriesTotal << " " << fHistPID -> GetEntries() << endl;
-        fDrawPID -> Clear();
+        e_info << "Total entries =" << entriesTotal << " (hist)=" << fHistPID -> GetEntries() << endl;
+        fHistPID -> GetXaxis() -> SetTitleOffset(1.2);
+        fHistPID -> SetTitle(Form("RUN %04d",fCurrentRunNumber));
         fDraw2D -> Clear();
-        fDraw3D -> Clear();
-        fDrawPID -> Add(fHistPID);
         fDraw2D -> Add(fHistPID, "colz");
+        fDraw2D -> SetStatsFillStyle(3001);
+        fDraw3D -> Clear();
         fDraw3D -> Add(fHistPID, "lego2");
     }
 }
 
 bool SelectFile(int index=-1)
 {
-    e_info << "SelectFile" << endl;
+    e_title << "SelectFile" << endl;
     while (true)
     {
         if (index<0) {
@@ -200,7 +150,9 @@ bool SelectFile(int index=-1)
             }
         }
         fCurrentFileName = fListGenFile.at(index);
-        fCurrentRunNumber = TString(fCurrentFileName(fCurrentFileName.Index("chkf")+8,4)).Atoi();
+        TString runNumberString = TString(fCurrentFileName(fCurrentFileName.Index("chkf")+8,4));
+        if (runNumberString.IsDigit()) fCurrentRunNumber = runNumberString.Atoi();
+        else fCurrentRunNumber = 9999;
         fListGenFile.erase(fListGenFile.begin()+index);
         cout << "   " << fCurrentFileName << endl;
         cout << "   (this file will be removed from the list)" << endl;
@@ -219,9 +171,14 @@ bool SelectFile(int index=-1)
     }
     CreateAndFillHistogram();
 
+    fGroupFit -> SetName(Form("event_fit_%04d",fCurrentRunNumber));
+    fGroupPID -> SetName(Form("event_pid_%04d",fCurrentRunNumber));
+    fDraw2D -> SetName(Form("draw_2d_%04d",fCurrentRunNumber));
+    fDraw3D -> SetName(Form("draw_3d_%04d",fCurrentRunNumber));
+
     fGroupPID -> Draw();
     cout << endl;
-    Guide("d");
+    Guide("td");
 
     return true;
 }
@@ -260,18 +217,16 @@ TF2* Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY, double sig
 
 void DrawPoints(int redraw, vector<vector<double>> points)
 {
-    e_info << "DrawPoints" << endl;
+    e_title << "DrawPoints" << endl;
     if (redraw==2) {
-        fDraw2D -> Clear();
-        fDrawPID -> CopyTo(fDraw2D,true);
+        fDraw2D -> Clear("!main");
         fGroupPID -> Draw();
-        Guide("r");
+        Guide("tr");
         return;
     }
 
     if (redraw==1) {
-        fDraw2D -> Clear();
-        fDrawPID -> CopyTo(fDraw2D,true);
+        fDraw2D -> Clear("!main");
         fGroupPID -> Draw();
     }
 
@@ -340,10 +295,12 @@ void DrawPoints(int redraw, vector<vector<double>> points)
             for (double contourScale : fContourScaleList) {
                 auto graphC = GetContourGraph(contourScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
                 graphC -> SetLineColor(kRed);
+                graphC -> SetLineStyle(9);
                 fDraw2D -> Add(graphC,"samel");
             }
-            //auto draw = GetFitTestDrawing(fHistPID,fit);
-            //fGroupFit -> Add(draw);
+            auto graphC = GetContourGraph(fFinalContourAScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
+            graphC -> SetLineColor(kRed);
+            fDraw2D -> Add(graphC,"samel");
         }
         count++;
     }
@@ -369,8 +326,7 @@ LKDrawing* GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitContanminent
     TString nameTest = fit -> GetName(); nameTest .ReplaceAll("fit_","histIntegralTest_");
     TString nameBack = fit -> GetName(); nameBack .ReplaceAll("fit_","histIntegralBack_");
     TString nameErrr = fit -> GetName(); nameErrr.ReplaceAll("fit_","histIntegralErrr_");
-    //TString title = "Count with in the contour;Contour amplitude [A];Relative count [total integral of the fit]";
-    TString title = "Count with in the contour;Contour amplitude [A];Count";
+    TString title = Form("[RUN %04d] (%d) Count in contour;S = Contour amplitude [A];Count",fCurrentRunNumber,idx);
     TH1D *histData = (TH1D*) fHistDataArray -> At(idx);
     TH1D *histFitG = (TH1D*) fHistFitGArray -> At(idx);
     TH1D *histBack = (TH1D*) fHistBackArray -> At(idx);
@@ -378,6 +334,7 @@ LKDrawing* GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitContanminent
     TH1D *histErrr = (TH1D*) fHistErrrArray -> At(idx);
     if (histData==nullptr)
     {
+        gROOT -> cd();
         histData = new TH1D(nameData,title,fNumContours,0,1);
         histFitG = new TH1D(nameFitG,title,fNumContours,0,1);
         histBack = new TH1D(nameBack,title,fNumContours,0,1);
@@ -405,6 +362,11 @@ LKDrawing* GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitContanminent
         histBack -> Reset("ICES");
         histTest -> Reset("ICES");
         histErrr -> Reset("ICES");
+        histData -> SetTitle(title);
+        histFitG -> SetTitle(title);
+        histBack -> SetTitle(title);
+        histTest -> SetTitle(title);
+        histErrr -> SetTitle(title);
         histData -> SetName(nameData);
         histFitG -> SetName(nameFitG);
         histBack -> SetName(nameBack);
@@ -460,9 +422,8 @@ LKDrawing* GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitContanminent
 
 void FitTotal()
 {
-    e_info << "FitTotal" << endl;
-    fDraw2D -> Clear();
-    fDrawPID -> CopyTo(fDraw2D,true);
+    e_title << "FitTotal" << endl;
+    fDraw2D -> Clear("!main");
     fGroupFit -> Clear();
     auto numFits = fFitArray -> GetEntries();
     TString formulaTotal;
@@ -517,6 +478,9 @@ void FitTotal()
         fitTotal -> SetParLimits(5+iFit*6, thetaR-0.1*TMath::Pi(), thetaR+0.1*TMath::Pi());
     }
     fHistPID -> Fit(fitTotal,"QBR0");
+    auto legend = new TLegend();
+    legend -> SetFillStyle(3001);
+    legend -> SetMargin(0.1);
     for (auto iFit=0; iFit<numFits; ++iFit)
     {
         auto fit = (TF2*) fFitArray -> At(iFit);
@@ -542,14 +506,31 @@ void FitTotal()
         for (double contourScale : fContourScaleList) {
             auto graphC = GetContourGraph(contourScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
             graphC -> SetLineColor(kRed);
-            //graphC -> Draw("samel");
+            graphC -> SetLineStyle(9);
             fDraw2D -> Add(graphC,"samel");
         }
+        auto graphC = GetContourGraph(fFinalContourAScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
+        graphC -> SetLineColor(kRed);
+        fDraw2D -> Add(graphC,"samel");
+        auto text = new TText(valueX,valueY,Form("%d",iFit));
+        text -> SetTextAlign(22);
+        text -> SetTextSize(0.02);
+        if (amplit<fHistPID->GetMaximum()*0.3)
+            text -> SetTextColor(kGreen);
+        fDraw2D -> Add(text,"same");
         for (auto iPar=0; iPar<fitTotal->GetNpar(); ++iPar)
             fitContanminent->SetParameter(iPar,fitTotal->GetParameter(iPar));
         fitContanminent->SetParameter(0+iFit*6,0);
         auto draw = GetFitTestDrawing(iFit,fHistPID,fit,fitContanminent);
         fGroupFit -> Add(draw);
+        TH1D *histData = (TH1D*) fHistDataArray -> At(iFit);
+        TH1D *histBack = (TH1D*) fHistBackArray -> At(iFit);
+        auto bin = histData -> FindBin(fFinalContourAScale+0.5*(1./fNumContours));
+        auto count = histData -> GetBinContent(bin);
+        auto contamination = histBack -> GetBinContent(bin);
+        auto corrected = count - contamination;
+        //fDraw2D -> AddLegendLine(Form("%d) cc=%d",iFit,int(corrected)));
+        legend -> AddEntry((TObject*)nullptr,Form("[%d] %d (%d)",iFit,int(count),int(contamination)),"");
     }
     if (fUse2D) {
         auto graphFitRange = new TGraph();
@@ -562,8 +543,10 @@ void FitTotal()
         graphFitRange -> SetPoint(4,xx1,yy1);
         fDraw2D -> Add(graphFitRange,"samel");
     }
+    //fDraw2D -> SetCreateLegend();
+    fDraw2D -> SetLegendCorner(1);
+    fDraw2D -> Add(legend);
     fGroupFit -> Draw();
-
     fGroupPID -> Draw();
 
     Guide("rqg");
@@ -652,6 +635,18 @@ void SaveBinning() {
     CreateAndFillHistogram(1);
 }
 
+void SetContourAScale(double scale) {
+    if (scale<0) {
+        e_note << "Enter fit range from 0.1 to 0.9 (1 default): ";
+        TString inputString;
+        cin >> inputString;
+        inputString = inputString.Strip(TString::kBoth);
+        scale = inputString.Atof();
+    }
+    fFinalContourAScale = scale;
+    cout << "   " << fFinalContourAScale << endl;
+}
+
 void ChangeSigDist(double sigDist) {
     if (sigDist<0) {
         e_note << "Enter fit range from 0 to 5 (1 default): ";
@@ -680,22 +675,35 @@ void Guide(TString mode)
           cout << "   SetBinNY(n)" << endl;
           cout << "   SaveBinning()" << endl;
     }
-    //else                    e_info << "Enter 'i' to print list of methods for binning setting" << endl;
-                            e_info << "Enter 'b' to reset binning configuration" << endl;
-                            e_info << "Enter 'v' to save current binning configuration" << endl;
-    if (mode.Index("q")>=0) e_info << "Enter 'q' to change fit range" << endl;
-    if (mode.Index("a")>=0) e_note << "Enter 'a' to print list of files" << endl;
-    if (mode.Index("s")>=0) e_note << "Enter 's' to select files" << endl;
-    if (mode.Index("d")>=0) e_note << "Enter 'd' to draw and select PID centers" << endl;
-    if (mode.Index("r")>=0) e_note << "Enter 't' to redraw" << endl;
-    if (mode.Index("r")>=0) e_note << "Enter 'r' to redraw and select PID centers" << endl;
-    if (mode.Index("f")>=0) e_note << "Enter 'f' to fit histogram simultaneously using previous fits" << endl;
-    if (mode.Index("g")>=0) e_note << "Enter 'g' to finalize the result" << endl;
+    else                    e_info << "Enter '_help'         to print list of methods for binning setting" << endl;
+                            e_info << "Enter '_reset_bin'    to reset binning configuration" << endl;
+                            e_info << "Enter '_save_bin'     to save current binning configuration" << endl;
+                            e_info << "Enter '_set_contour'  to change the final contour amplitude scale (" << fFinalContourAScale << ")" << endl;
+    if (mode.Index("a")>=0) e_note << "Enter '_list_files'   to print list of files" << endl;
+    if (mode.Index("s")>=0) e_note << "Enter '_select_files' to select files" << endl;
+    if (mode.Index("d")>=0) e_note << "Enter '_draw_points'  to draw and select PID centers" << endl;
+    if (mode.Index("t")>=0) e_note << "Enter '_draw_pid'     to redraw" << endl;
+    if (mode.Index("r")>=0) e_note << "Enter '_select_pid'   to redraw and select PID centers" << endl;
+    if (mode.Index("f")>=0) e_note << "Enter '_fit_total'    to fit histogram simultaneously using previous fits" << endl;
+    if (mode.Index("g")>=0) e_note << "Enter '_summary'      to make summary of the result" << endl;
+    if (mode.Index("q")>=0) e_info << "Enter '_set_sigdist'  to change fit range" << endl;
+    //else                    e_info << "Enter 'ii' to print list of methods for binning setting" << endl;
+    //                        e_info << "Enter 'bb' to reset binning configuration" << endl;
+    //                        e_info << "Enter 'vv' to save current binning configuration" << endl;
+    //                        e_info << "Enter 'ee' to change the final contour amplitude scale (" << fFinalContourAScale << ")" << endl;
+    //if (mode.Index("a")>=0) e_note << "Enter 'aa' to print list of files" << endl;
+    //if (mode.Index("s")>=0) e_note << "Enter 'ss' to select files" << endl;
+    //if (mode.Index("d")>=0) e_note << "Enter 'dd' to draw and select PID centers" << endl;
+    //if (mode.Index("t")>=0) e_note << "Enter 'tt' to redraw" << endl;
+    //if (mode.Index("r")>=0) e_note << "Enter 'rr' to redraw and select PID centers" << endl;
+    //if (mode.Index("f")>=0) e_note << "Enter 'ff' to fit histogram simultaneously using previous fits" << endl;
+    //if (mode.Index("g")>=0) e_note << "Enter 'gg' to make summary of the result" << endl;
+    //if (mode.Index("q")>=0) e_info << "Enter 'qq' to change fit range" << endl;
 }
 
 void MakeSummary()
 {
-    e_info << "MakeSummary" << endl;
+    e_title << "MakeSummary" << endl;
     //TString summaryName1 = fCurrentFileName;
     //summaryName1.ReplaceAll("gen.root",".txt");
     //summaryName1.ReplaceAll("/chkf2run","/run");
@@ -732,6 +740,7 @@ void MakeSummary()
             fileSummary << "####################################################" << endl;
             fileSummary << left;
             fileSummary << setw(25) << Form("pid%d/total",iFit)              << total << endl;
+            fileSummary << setw(25) << Form("pid%d/ca_scale",iFit)           << fFinalContourAScale << endl;
             fileSummary << setw(25) << Form("pid%d/count",iFit)              << count << endl;
             fileSummary << setw(25) << Form("pid%d/contamination",iFit)      << contamination << endl;
             fileSummary << setw(25) << Form("pid%d/corrected",iFit)          << corrected << endl;
@@ -752,6 +761,11 @@ void MakeSummary()
             fileSummary << endl;
         }
     }
+
+    auto cvsPID = fGroupPID -> GetCanvas();
+    auto cvsFit = fGroupFit -> GetCanvas();
+    if (cvsPID!=nullptr) cvsPID -> SaveAs(Form("figures/pid_%04d.png",fCurrentRunNumber));
+    if (cvsFit!=nullptr) cvsFit -> SaveAs(Form("figures/fit_%04d.png",fCurrentRunNumber));
 
     Guide("ra");
 }
