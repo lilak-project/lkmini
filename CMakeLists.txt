@@ -2,10 +2,19 @@ cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(BEAMPID)
 
 add_compile_definitions(BEAMPID_COMPILED)
-set(BEAMPID_SOURCE_DIRECTORY_LIST ${CMAKE_SOURCE_DIR}/include CACHE INTERNAL "")
+set(BEAMPID_SOURCE_DIRECTORY_LIST ${CMAKE_SOURCE_DIR}/source CACHE INTERNAL "")
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT REQUIRED COMPONENTS RIO Net Geom Gui Graf Graf3d Ged Matrix MathCore Physics)
 include(${ROOT_USE_FILE})
+
+file(WRITE ${CMAKE_SOURCE_DIR}/rootlogon.C
+"{\n"
+"    if (gSystem->Load(\"${CMAKE_BINARY_DIR}/libBEAMPID\")<=1)\n"
+"        cout << \"Loading BeamPID\" << endl;\n"
+"    else\n"
+"        cout << \"Cannot load BeamPID\" << endl;\n"
+"}"
+)
 
 file(WRITE ${CMAKE_BINARY_DIR}/LinkDef.h.in
 "#ifdef __CINT__\n"
@@ -18,7 +27,6 @@ file(WRITE ${CMAKE_BINARY_DIR}/LinkDef.h.in
 )
 
 set(BEAMPID_ROOT_LINKED_CLASS_LIST)
-#list(APPEND BEAMPID_HEADER_FILES ${CMAKE_SOURCE_DIR}/include/LKCompiled.h)
 
 foreach(_directory ${BEAMPID_SOURCE_DIRECTORY_LIST})
     message(STATUS "source directory : " ${_directory})
@@ -32,7 +40,6 @@ foreach(_directory ${BEAMPID_SOURCE_DIRECTORY_LIST})
     foreach(_full_name ${BEAMPID_${_name}_HEADER_FILES})
         get_filename_component(file_name ${_full_name} NAME)
         if(file_name STREQUAL "LKCompiled.h")
-            #message(STATUS "skipping ${file_name}")
             continue()
         endif()
         message(STATUS "adding ${file_name}")
@@ -44,7 +51,6 @@ foreach(_directory ${BEAMPID_SOURCE_DIRECTORY_LIST})
     list(APPEND PRAGMA_LINE_CPP_CLASS_LIST "\n")
     configure_file(${CMAKE_BINARY_DIR}/LinkDef.h.in ${CMAKE_BINARY_DIR}/LinkDef.h @ONLY)
     set(BEAMPID_${_name}_LINKDEF_FILE ${CMAKE_BINARY_DIR}/LinkDef.h)
-    #file(GLOB BEAMPID_${_name}_LINKDEF_FILE ${CMAKE_BINARY_DIR}/link_${_name}_LinkDef.h)
 endforeach(_directory)
 
 add_definitions(${ROOT_CXX_FLAGS})
