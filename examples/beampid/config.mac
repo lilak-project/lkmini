@@ -1,7 +1,7 @@
 # config.mac created from LKParameterContainer::Print
 fit_range                     1.000000  # fit range in unit of sigma
-x_name                        .  # x value name in tree
-y_name                        .  # y value name in tree
+x_name                        .  # x value name in tree (".": rf0)
+y_name                        .  # y value name in tree (".": "f2ssde" for chkf2, "f3ssde" for chkf3)
 num_contours                  10  # number of contours for integral test
 binning                       800,-1025.000000,-875.000000, 800,0.000000,200.000000  # default x(3),y(3) binning for pid plot
 cut_s_value                   0.200000  # s-value (ratio compared to the gaussian amplitude) for drawing pid cut contour

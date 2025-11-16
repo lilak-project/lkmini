@@ -3,11 +3,11 @@
 
 #ifndef LILAK_VERSION
 
-#define LILAK_VERSION "dummy"
-#define LILAK_HASH "dummy"
+#define LILAK_VERSION "lkmini"
+#define LILAK_HASH "lkmini"
 
-#define LILAK_MAINPROJECT_VERSION "dummy"
-#define LILAK_MAINPROJECT_HASH "dummy"
+#define LILAK_MAINPROJECT_VERSION "lkmini"
+#define LILAK_MAINPROJECT_HASH "lkmini"
 
 #define LILAK_HOSTNAME "dummy_host"
 #define LILAK_USERNAME "dummy_user"
@@ -21,7 +21,7 @@ static const char* const LILAK_PROJECT_VERSIONS[] = {};
 #define LILAK_PROJECT_NAME(i)    (LILAK_PROJECT_NAMES[(i)])
 #define LILAK_PROJECT_VERSION(i) (LILAK_PROJECT_VERSIONS[(i)])
 
-#if !defined(BEAMPID_COMPILED) && !defined(LILAK_COMPILED) && !defined(__ROOTCLING__) && !defined(__CLING__)
+#if !defined(LKMINI_COMPILED) && !defined(LILAK_COMPILED) && !defined(__ROOTCLING__) && !defined(__CLING__)
 #include "LKCut.cpp"
 #include "LKMisc.cpp"
 #include "LKLogger.cpp"
@@ -39,4 +39,3 @@ static const char* const LILAK_PROJECT_VERSIONS[] = {};
 #endif
 
 #endif
-

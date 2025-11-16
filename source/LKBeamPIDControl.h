@@ -40,6 +40,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
 
         void PressedHelp();
         void PressedPrintBinning();
+        void PressedAutoBinning();
         void PressedResetBinning();
         void PressedSaveBinning();
         void PressedSetXBinSize();
@@ -73,6 +74,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         TGTextButton *fBtnFitTotal        = nullptr;
         TGTextButton *fBtnMakeSummary     = nullptr;
         TGTextButton *fBtnHelp            = nullptr;
+        TGTextButton *fBtnAutoBinning     = nullptr;
         TGTextButton *fBtnPrintBinning    = nullptr;
         TGTextButton *fBtnResetBinning    = nullptr;
         TGTextButton *fBtnSaveBinning     = nullptr;

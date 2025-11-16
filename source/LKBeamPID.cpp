@@ -22,6 +22,7 @@ LKBeamPID::LKBeamPID()
     fDraw2D -> SetCanvasMargin(.11,.15,.11,0.08);
 
     InitParameters();
+    fGroupFit -> Draw();
 }
 
 void LKBeamPID::InitParameters()
@@ -163,6 +164,20 @@ void LKBeamPID::CreateAndFillHistogram(int printb)
         fDraw2D -> SetStatsFillStyle(3001);
         fDraw2D -> Print(); // XXX
         fStage = 3;
+    }
+}
+
+void LKBeamPID::AutoBinning()
+{
+    if (fDataTree) {
+        double x1 = fDataTree -> GetMinimum(fXName);
+        double x2 = fDataTree -> GetMaximum(fXName);
+        double y1 = fDataTree -> GetMinimum(fYName);
+        double y2 = fDataTree -> GetMaximum(fYName);
+        SetBinning(200, x1, x2, 200, y1, y2);
+        PrintBinning();
+        CreateAndFillHistogram(0);
+        fDraw2D -> Draw();
     }
 }
 

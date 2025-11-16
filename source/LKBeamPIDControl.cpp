@@ -71,18 +71,19 @@ LKBeamPIDControl::LKBeamPIDControl(UInt_t w, UInt_t h)
     fBtnFitTotal        = mkBtn(col1, "&6 Fit total",      "PressedFitTotal()");
     fBtnMakeSummary     = mkBtn(col1, "&7 Make summary",   "PressedMakeSummary()");
 
-    fBtnHelp            = mkBtn(col2, "&Help",             "PressedHelp()");
-    fBtnSetSValue       = mkBtn(col2, "Set S &value",      "PressedSetSValue()");
-    fBtnSetFitRange     = mkBtn(col2, "Set &fit range",    "PressedSetFitRange()");
-    fBtnSetRunNumber    = mkBtn(col2, "Set &run number",   "PressedSetRunNumber()");
-    fBtnSaveConfig      = mkBtn(col2, "&Save config.",     "PressedSaveConfiguration()");
-    fBtnQuit            = mkBtn(col2, "&Quit",             "PressedQuit()");
+    fBtnAutoBinning     = mkBtn(col2, "&Auto binning",     "PressedAutoBinning()");
+    fBtnPrintBinning    = mkBtn(col2, "&Print binning",    "PressedPrintBinning()");
+    fBtnResetBinning    = mkBtn(col2, "R&eset binning",    "PressedResetBinning()");
+    fBtnSaveBinning     = mkBtn(col2, "S&ave binning",     "PressedSaveBinning()");
+    fBtnSetBinWidthX    = mkBtn(col2, "Set &x-bin width",  "PressedSetXBinSize()");
+    fBtnSetBinWidthY    = mkBtn(col2, "Set &y-bin width",  "PressedSetYBinSize()");
 
-    fBtnPrintBinning    = mkBtn(col3, "&Print binning",    "PressedPrintBinning()");
-    fBtnResetBinning    = mkBtn(col3, "R&eset binning",    "PressedResetBinning()");
-    fBtnSaveBinning     = mkBtn(col3, "S&ave binning",     "PressedSaveBinning()");
-    fBtnSetBinWidthX    = mkBtn(col3, "Set &x-bin width",  "PressedSetXBinSize()");
-    fBtnSetBinWidthY    = mkBtn(col3, "Set &y-bin width",  "PressedSetYBinSize()");
+    fBtnHelp            = mkBtn(col3, "&Help",             "PressedHelp()");
+    fBtnSetSValue       = mkBtn(col3, "Set S &value",      "PressedSetSValue()");
+    fBtnSetFitRange     = mkBtn(col3, "Set &fit range",    "PressedSetFitRange()");
+    fBtnSetRunNumber    = mkBtn(col3, "Set &run number",   "PressedSetRunNumber()");
+    fBtnSaveConfig      = mkBtn(col3, "&Save config.",     "PressedSaveConfiguration()");
+    fBtnQuit            = mkBtn(col3, "&Quit",             "PressedQuit()");
 
     BtNx(fBtnListFiles);
     BtNx(fBtnUseCurrentgPad);
@@ -148,6 +149,8 @@ void LKBeamPIDControl::PressedSetFitRange()       { ResetBB(0,1,1); BtHL(fBtnSet
 void LKBeamPIDControl::PressedSetRunNumber()      { ResetBB(0,1,1); BtHL(fBtnSetRunNumber   ); RequireInput(InputMode::SetRunNumber); }
 void LKBeamPIDControl::PressedSaveConfiguration() { ResetBB(0,1,1); BtHL(fBtnSaveConfig     ); SaveConfiguration(); }
 
+
+void LKBeamPIDControl::PressedAutoBinning()       { ResetBB(0,1,1); BtHL(fBtnAutoBinning    ); AutoBinning(); }
 void LKBeamPIDControl::PressedPrintBinning()      { ResetBB(0,1,1); BtHL(fBtnPrintBinning   ); PrintBinning(); }
 void LKBeamPIDControl::PressedResetBinning()      { ResetBB(0,1,1); BtHL(fBtnResetBinning   ); ResetBinning(); }
 void LKBeamPIDControl::PressedSaveBinning()       { ResetBB(0,1,1); BtHL(fBtnSaveBinning    ); SaveBinning(); }
@@ -186,22 +189,22 @@ void LKBeamPIDControl::RequireInput(InputMode mode)
     fNumEntry->GetNumberEntry()->SetFocus();
     switch (fInputMode) {
         case InputMode::SetFileNumber:
-            lk_info << "Enter file number" << endl;
+            e_info << "Enter file number" << endl;
             break;
         case InputMode::SetSValue:
-            lk_info << "Enter X bin width" << endl;
+            e_info << "Enter X bin width" << endl;
             break;
         case InputMode::SetXBinSize:
-            lk_info << "Enter X bin width" << endl;
+            e_info << "Enter X bin width" << endl;
             break;
         case InputMode::SetYBinSize:
-            lk_info << "Enter S-value" << endl;
+            e_info << "Enter S-value" << endl;
             break;
         case InputMode::SetFitRange:
-            lk_info << "Enter fit range in sigma" << endl;
+            e_info << "Enter fit range in sigma" << endl;
             break;
         case InputMode::SetRunNumber:
-            lk_info << "Enter run number " << endl;
+            e_info << "Enter run number " << endl;
             break;
         default:
             break;
@@ -214,27 +217,27 @@ void LKBeamPIDControl::PressedEnter()
     double val = fNumEntry->GetNumber();
     switch (fInputMode) {
         case InputMode::SetFileNumber:
-            lk_info << "Select file index : " << val << endl;
+            e_info << "Select file index : " << val << endl;
             SelectFile(int(val));
             break;
         case InputMode::SetSValue:
-            lk_info << "S value changed to " << val << endl;
+            e_info << "S value changed to " << val << endl;
             SetSValue(val);
             break;
         case InputMode::SetXBinSize:
-            lk_info << "x-bin size changed to " << val << endl;
+            e_info << "x-bin size changed to " << val << endl;
             SetXBinSize(val);
             break;
         case InputMode::SetYBinSize:
-            lk_info << "y-bin size changed to " << val << endl;
+            e_info << "y-bin size changed to " << val << endl;
             SetYBinSize(val);
             break;
         case InputMode::SetFitRange:
-            lk_info << "Fit range changed to " << val << " (*sigma)" << endl;
+            e_info << "Fit range changed to " << val << " (*sigma)" << endl;
             SetGausFitRange(val);
             break;
         case InputMode::SetRunNumber:
-            lk_info << "Fit range changed to " << val << " (*sigma)" << endl;
+            e_info << "Fit range changed to " << val << " (*sigma)" << endl;
             SetRunNumber(int(val));
             break;
         default:

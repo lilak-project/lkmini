@@ -1,20 +1,45 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(BEAMPID)
+project(LKMINI)
 
-add_compile_definitions(BEAMPID_COMPILED)
-set(BEAMPID_SOURCE_DIRECTORY_LIST ${CMAKE_SOURCE_DIR}/source CACHE INTERNAL "")
+add_compile_definitions(LKMINI_COMPILED)
+set(LKMINI_SOURCE_DIRECTORY_LIST ${CMAKE_SOURCE_DIR}/source CACHE INTERNAL "")
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT REQUIRED COMPONENTS RIO Net Geom Gui Graf Graf3d Ged Matrix MathCore Physics)
 include(${ROOT_USE_FILE})
 
+set(ROOTLOGON_CONTENT [[
+{
+    if (gSystem->Load("${CMAKE_BINARY_DIR}/libLKMINI")<=1)
+        cout << "Loading LKMINI" << endl;
+    else
+        cout << "Cannot load LKMINI" << endl;
+}
+]])
+
+#file(WRITE "${CMAKE_SOURCE_DIR}/rootlogon.C" "${ROOTLOGON_CONTENT}")
 file(WRITE ${CMAKE_SOURCE_DIR}/rootlogon.C
 "{\n"
-"    if (gSystem->Load(\"${CMAKE_BINARY_DIR}/libBEAMPID\")<=1)\n"
-"        cout << \"Loading BeamPID\" << endl;\n"
+"    if (gSystem->Load(\"${CMAKE_BINARY_DIR}/libLKMINI\")<=1)\n"
+"        cout << \"Loading LKMINI\" << endl;\n"
 "    else\n"
-"        cout << \"Cannot load BeamPID\" << endl;\n"
+"        cout << \"Cannot load LKMINI\" << endl;\n"
 "}"
 )
+
+file(GLOB EXAMPLE_DIRS RELATIVE "${CMAKE_SOURCE_DIR}/examples" "${CMAKE_SOURCE_DIR}/examples/*")
+foreach(d ${EXAMPLE_DIRS})
+  if (IS_DIRECTORY "${CMAKE_SOURCE_DIR}/examples/${d}")
+    #file(WRITE "${CMAKE_SOURCE_DIR}/examples/${d}/rootlogon.C" "${ROOTLOGON_CONTENT}")
+    file(WRITE "${CMAKE_SOURCE_DIR}/examples/${d}/rootlogon.C"
+"{\n"
+"    if (gSystem->Load(\"${CMAKE_BINARY_DIR}/libLKMINI\")<=1)\n"
+"        cout << \"Loading LKMINI\" << endl;\n"
+"    else\n"
+"        cout << \"Cannot load LKMINI\" << endl;\n"
+"}"
+)
+  endif()
+endforeach()
 
 file(WRITE ${CMAKE_BINARY_DIR}/LinkDef.h.in
 "#ifdef __CINT__\n"
@@ -26,18 +51,18 @@ file(WRITE ${CMAKE_BINARY_DIR}/LinkDef.h.in
 "#endif\n"
 )
 
-set(BEAMPID_ROOT_LINKED_CLASS_LIST)
+set(LKMINI_ROOT_LINKED_CLASS_LIST)
 
-foreach(_directory ${BEAMPID_SOURCE_DIRECTORY_LIST})
+foreach(_directory ${LKMINI_SOURCE_DIRECTORY_LIST})
     message(STATUS "source directory : " ${_directory})
     include_directories(${_directory})
     string(REPLACE / _ _name ${_directory})
-    list(APPEND BEAMPID_SOURCE_NAME_LIST ${_name})
-    set(BEAMPID_${_name}_G_NAME G__${_name}_Dict)
-    file(GLOB BEAMPID_${_name}_SOURCE_FILES ${_directory}/*.cpp)
-    file(GLOB BEAMPID_${_name}_HEADER_FILES ${_directory}/*.h)
+    list(APPEND LKMINI_SOURCE_NAME_LIST ${_name})
+    set(LKMINI_${_name}_G_NAME G__${_name}_Dict)
+    file(GLOB LKMINI_${_name}_SOURCE_FILES ${_directory}/*.cpp)
+    file(GLOB LKMINI_${_name}_HEADER_FILES ${_directory}/*.h)
     set(PRAGMA_LINE_CPP_CLASS_LIST)
-    foreach(_full_name ${BEAMPID_${_name}_HEADER_FILES})
+    foreach(_full_name ${LKMINI_${_name}_HEADER_FILES})
         get_filename_component(file_name ${_full_name} NAME)
         if(file_name STREQUAL "LKCompiled.h")
             continue()
@@ -46,33 +71,33 @@ foreach(_directory ${BEAMPID_SOURCE_DIRECTORY_LIST})
         string(REPLACE .h "" class_name ${file_name})
         set(pragma_line "\n#pragma link C++ class ${class_name}+")
         list(APPEND PRAGMA_LINE_CPP_CLASS_LIST ${pragma_line})
-        list(APPEND BEAMPID_ROOT_LINKED_CLASS_LIST ${class_name})
+        list(APPEND LKMINI_ROOT_LINKED_CLASS_LIST ${class_name})
     endforeach()
     list(APPEND PRAGMA_LINE_CPP_CLASS_LIST "\n")
     configure_file(${CMAKE_BINARY_DIR}/LinkDef.h.in ${CMAKE_BINARY_DIR}/LinkDef.h @ONLY)
-    set(BEAMPID_${_name}_LINKDEF_FILE ${CMAKE_BINARY_DIR}/LinkDef.h)
+    set(LKMINI_${_name}_LINKDEF_FILE ${CMAKE_BINARY_DIR}/LinkDef.h)
 endforeach(_directory)
 
 add_definitions(${ROOT_CXX_FLAGS})
-foreach(_name ${BEAMPID_SOURCE_NAME_LIST})
+foreach(_name ${LKMINI_SOURCE_NAME_LIST})
     ROOT_GENERATE_DICTIONARY(
-        ${BEAMPID_${_name}_G_NAME}
-        ${BEAMPID_${_name}_HEADER_FILES}
-        LINKDEF ${BEAMPID_${_name}_LINKDEF_FILE}
+        ${LKMINI_${_name}_G_NAME}
+        ${LKMINI_${_name}_HEADER_FILES}
+        LINKDEF ${LKMINI_${_name}_LINKDEF_FILE}
     )
 endforeach(_name)
 
-foreach(_name ${BEAMPID_SOURCE_NAME_LIST})
-    foreach(_file ${BEAMPID_${_name}_SOURCE_FILES})
-        list(APPEND BEAMPID_LIB_LIST ${_file})
-        list(APPEND BEAMPID_SOURCE_FILES ${_file})
+foreach(_name ${LKMINI_SOURCE_NAME_LIST})
+    foreach(_file ${LKMINI_${_name}_SOURCE_FILES})
+        list(APPEND LKMINI_LIB_LIST ${_file})
+        list(APPEND LKMINI_SOURCE_FILES ${_file})
     endforeach(_file)
-    foreach(_file ${BEAMPID_${_name}_HEADER_FILES})
-        list(APPEND BEAMPID_HEADER_FILES ${_file})
+    foreach(_file ${LKMINI_${_name}_HEADER_FILES})
+        list(APPEND LKMINI_HEADER_FILES ${_file})
     endforeach(_file)
-    list(APPEND BEAMPID_LIB_LIST ${BEAMPID_${_name}_G_NAME}.cxx)
+    list(APPEND LKMINI_LIB_LIST ${LKMINI_${_name}_G_NAME}.cxx)
 endforeach(_name)
 
-add_library(BEAMPID SHARED ${BEAMPID_LIB_LIST})
-target_link_libraries(BEAMPID PUBLIC ${ROOT_LIBRARIES})
-target_include_directories(BEAMPID PUBLIC ${ROOT_INCLUDE_DIRS} ${BEAMPID_SOURCE_DIRECTORY_LIST})
+add_library(LKMINI SHARED ${LKMINI_LIB_LIST})
+target_link_libraries(LKMINI PUBLIC ${ROOT_LIBRARIES})
+target_include_directories(LKMINI PUBLIC ${ROOT_INCLUDE_DIRS} ${LKMINI_SOURCE_DIRECTORY_LIST})

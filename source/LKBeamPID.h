@@ -55,6 +55,7 @@ class LKBeamPID
         void CollectRootFiles(std::vector<TString> &listGenFile, TString dataPath="", TString format="");
 
         void Help(TString mode="help");
+        void AutoBinning();
         void PrintBinning();
         void ResetBinning();
         void SaveBinning();
