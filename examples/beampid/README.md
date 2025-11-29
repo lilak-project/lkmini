@@ -54,8 +54,8 @@ There are two main ways to use the program.
 2. Open the GUI by typing following on the root prompt: LKBeamPIDControl pid
 3. Click **"3 Use gPad"** to attach the GUI to the current histogram canvas.
 4. Click **"4 Select centers"** and select PID centers with the mouse. Double-click the final point to finish.
-5. Click **"6 Fit total"** to perform the full 2D Gaussian fit.
-6. Click **"7 Make summary"** to generate a summary file. The file name is automatically determined from the run number.
+5. Click **"7 Fit total"** to perform the full 2D Gaussian fit.
+6. Click **"8 Make summary"** to generate a summary file. The file name is automatically determined from the run number.
 
 ---
 
@@ -65,6 +65,18 @@ There are two main ways to use the program.
 2. Click **"1 List files"** to scan the current directory and its subdirectories for files that match the `file_format` pattern defined in `config.mac`.
 3. Click **"2 Select file"**, then type a file index number into the input box at the top and press **Enter**.
 4. Continue the same workflow as in Method 1 (steps 4–6). After finishing one run, return to step 3 to select another file and repeat the analysis.
+
+---
+
+## Count Calibration (Testing)
+
+- If you want to correct for the difference between the raw histogram counts and the fitted counts, you can use the calibration feature.
+The calibration procedure estimates the systematic trend in the count differences between the data and the fit.
+After calibration, the fitted yields are adjusted by the derived percentage correction.
+
+- Before running Steps 4 in Method 1, first select the major peaks using **"4 Select centers"**, then click **"6 Calibration"**, and finally run **"7 Fit total"**.
+
+- Calibration only needs to be performed once, and the resulting correction will be applied automatically to the subsequent fits.
 
 ---
 
