@@ -12,14 +12,24 @@ LKBeamPID::LKBeamPID()
     fHistDataArray = new TObjArray();
     fHistFitGArray = new TObjArray();
     fHistBackArray = new TObjArray();
+    fHistCalcArray = new TObjArray();
     fHistTestArray = new TObjArray();
     fHistErrrArray = new TObjArray();
+    fGraphFitError = new TGraph();
     fTop = new LKDrawingGroup();
     fGroupFit = fTop -> CreateGroup(Form("event_fit_%04d",fCurrentRunNumber));
     fGroupPID = fTop -> CreateGroup(Form("event_pid_%04d",fCurrentRunNumber));
     fDraw2D = fGroupPID -> CreateDrawing(Form("draw_2d_%04d",fCurrentRunNumber));
     fDraw2D -> SetCanvasSize(1,1,1);
     fDraw2D -> SetCanvasMargin(.11,.15,.11,0.08);
+    fFitCountDiff = new TF1("fitdiff","pol1",0,1);
+    fFitCountDiff -> SetParameters(0,0);
+    fFitCountDiff -> SetLineColor(kBlue);
+    fFitCountDiff -> SetLineStyle(1);
+    fFitCountDiff2 = new TF1("fitdiff2","pol1",0,1);
+    fFitCountDiff2 -> SetParameters(0,0);
+    fFitCountDiff2 -> SetLineWidth(1);
+    fFitCountDiff2 -> SetLineStyle(2);
 
     InitParameters();
     fGroupFit -> Draw();
@@ -31,8 +41,8 @@ void LKBeamPID::InitParameters()
 
     LKParameterContainer par("config.mac");
     par.UpdatePar(fFitRangeInSigma,    "fit_range");
-    par.UpdatePar(fXName,              "x_name");
-    par.UpdatePar(fYName,              "y_name");
+    par.UpdatePar(fSetXName,           "x_name");
+    par.UpdatePar(fSetYName,           "y_name");
     par.UpdatePar(fNumContours,        "num_contours");
     par.UpdatePar(fBnn0,               "binning");
     par.UpdatePar(fFinalContourAScale, "cut_s_value");
@@ -48,9 +58,14 @@ void LKBeamPID::InitParameters()
     fContourScaleList = par.InitPar(fContourScaleList, "example_s_list");
     par.Print();
 
-    if (fXName==".") fXName = "";
-    if (fYName==".") fYName = "";
+    if (fSetXName==".") fSetXName = "";
+    if (fSetYName==".") fSetYName = "";
     fBnn1 = fBnn0;
+
+    for (auto bin=0; bin<=fNumContours; ++bin) {
+        fValueOfS.push_back(0);
+        fErrorAtS.push_back(0);
+    }
 }
 
 void LKBeamPID::Help(TString mode)
@@ -124,12 +139,17 @@ bool LKBeamPID::SelectFile(int index)
     if (fDataFile) fDataFile -> Close();
     fDataFile = new TFile(fCurrentFileName,"read");
     fDataTree = (TTree*) fDataFile -> Get("tree");
-    if (fYName.IsNull()) {
+    if (fSetYName.IsNull()) {
         if      (fCurrentFileName.Index("chkf2run")>=0) { fCurrentType = 2; fYName = "f2ssde"; }
         else if (fCurrentFileName.Index("chkf3run")>=0) { fCurrentType = 3; fYName = "f3ssde"; }
     }
-    if (fXName.IsNull())
+    else
+        fYName = fSetYName;
+
+    if (fSetXName.IsNull())
         fXName = "rf0";
+    else
+        fXName = fSetXName;
 
     if (!fInitialized)
     {
@@ -186,6 +206,7 @@ void LKBeamPID::UsePad(TVirtualPad *pad)
     fDraw2D -> Clear();
     fDraw2D -> Add(gPad);
     fDraw2D -> Clear("!main:!cvs");
+    fDraw2D -> SetOptStat(10);
     fHistPID = (TH2D*) fDraw2D -> GetMainHist();
     fXName = fHistPID -> GetXaxis() -> GetTitle();
     fYName = fHistPID -> GetYaxis() -> GetTitle();
@@ -314,9 +335,11 @@ void LKBeamPID::SelectCenters(vector<vector<double>> points)
     return;
 }
 
-void LKBeamPID::FitTotal()
+void LKBeamPID::FitTotal(bool calibrationRun)
 {
-    e_title << "FitTotal" << endl;
+    if (calibrationRun) e_title << "CalibrationRun" << endl;
+    else e_title << "FitTotal" << endl;
+
     if (fStage<2) {
         e_warning << "Must select file before fit total pid!" << endl;
         return;
@@ -382,6 +405,7 @@ void LKBeamPID::FitTotal()
     }
     e_info << "Fitting " << numFits << " PIDs in " << Form("x=(%f,%f), y=(%f,%f) ...",xx1,xx2,yy1,yy2) << endl;
     fHistPID -> Fit(fitTotal,"QBR0");
+
     auto legend = new TLegend();
     legend -> SetFillStyle(3001);
     legend -> SetMargin(0.1);
@@ -425,17 +449,51 @@ void LKBeamPID::FitTotal()
         for (auto iPar=0; iPar<fitTotal->GetNpar(); ++iPar)
             fitContanminent->SetParameter(iPar,fitTotal->GetParameter(iPar));
         fitContanminent->SetParameter(0+iFit*6,0);
-        auto draw = GetFitTestDrawing(iFit,fHistPID,fit,fitContanminent);
+        auto draw = GetFitTestDrawing(iFit,fHistPID,fit,fitContanminent,(iFit==0));
         fGroupFit -> Add(draw);
         TH1D *histData = (TH1D*) fHistDataArray -> At(iFit);
         TH1D *histBack = (TH1D*) fHistBackArray -> At(iFit);
+        TH1D *histCalc = (TH1D*) fHistCalcArray -> At(iFit);
         auto bin = histData -> FindBin(fFinalContourAScale+0.5*(1./fNumContours));
         auto count = histData -> GetBinContent(bin);
         auto contamination = histBack -> GetBinContent(bin);
+        auto calculated = histCalc -> GetBinContent(bin);
         auto corrected = count - contamination;
         //fDraw2D -> AddLegendLine(Form("%d) cc=%d",iFit,int(corrected)));
         legend -> AddEntry((TObject*)nullptr,Form("[%d] %d (%d)",iFit,int(count),int(contamination)),"");
     }
+    {
+        TH2D *histErrr = (TH2D*) fHistErrrArray -> At(0);
+        auto draw_errr = fGroupFit -> CreateDrawing();
+        draw_errr -> Add(histErrr,"colz");
+        auto graph = new TGraphErrors();
+        graph -> SetName("count_difference");
+        for (auto bin=2; bin<=fNumContours; ++bin) {
+            auto hist_e = (TH1D*) histErrr -> ProjectionY(Form("hist_e_proj%d",bin),bin,bin);
+            auto mean = hist_e -> GetMean();
+            auto stddev = hist_e -> GetStdDev();
+            graph -> SetPoint(graph->GetN(),histErrr->GetXaxis()->GetBinCenter(bin),mean);
+            graph -> SetPointError(graph->GetN()-1,0,stddev);
+            fValueOfS[bin] = double(bin-1)/fNumContours;
+            fErrorAtS[bin] = stddev;
+        }
+        graph -> SetMarkerStyle(24);
+        draw_errr -> Add(graph,"samep");
+        draw_errr -> SetGridy();
+        if (calibrationRun) {
+            fFitCountDiff -> SetParameter(0,graph->GetPointX(0));
+            graph -> Fit(fFitCountDiff,"QBR0");
+            draw_errr -> Add(fFitCountDiff,"samel");
+            fCalibrated = true;
+        }
+        else {
+            //fFitCountDiff2 -> SetParameter(0,graph->GetPointX(0));
+            //graph -> Fit(fFitCountDiff2);
+            //draw_errr -> Add(fFitCountDiff2,"samel");
+        }
+    }
+
+    //if (calibrationRun==false)
     {
         auto graphFitRange = new TGraph();
         graphFitRange -> SetLineColor(kYellow);
@@ -446,15 +504,21 @@ void LKBeamPID::FitTotal()
         graphFitRange -> SetPoint(3,xx1,yy2);
         graphFitRange -> SetPoint(4,xx1,yy1);
         fDraw2D -> Add(graphFitRange,"samel");
-    }
-    //fDraw2D -> SetCreateLegend();
-    fDraw2D -> SetLegendCorner(1);
-    fDraw2D -> Add(legend);
-    fGroupFit -> Draw();
-    fDraw2D -> Draw();
 
-    Help("rqg");
-    fStage = 6;
+        //fDraw2D -> SetCreateLegend();
+        fDraw2D -> SetLegendCorner(1);
+        fDraw2D -> Add(legend);
+        fGroupFit -> Draw();
+        fDraw2D -> Draw();
+
+        Help("rqg");
+        fStage = 6;
+    }
+}
+
+void LKBeamPID::CalibrationRun()
+{
+    FitTotal(true);
 }
 
 void LKBeamPID::MakeSummary()
@@ -468,6 +532,10 @@ void LKBeamPID::MakeSummary()
         e_warning << "Must select points before creating summary!" << endl;
         return;
     }
+    else if (fStage<6) {
+        e_warning << "Must run fit total before creating summary!" << endl;
+        return;
+    }
     gSystem -> Exec("mkdir -p summary/");
     TString summaryName1 = Form("summary/run_%04d.root",fCurrentRunNumber);
     TString summaryName2 = Form("summary/run_%04d.txt",fCurrentRunNumber);
@@ -476,6 +544,13 @@ void LKBeamPID::MakeSummary()
     for (TString summaryName : {summaryName2})
     {
         ofstream fileSummary(summaryName);
+        fileSummary << "####################################################" << endl;
+        fileSummary << left;
+        fileSummary << setw(25) << "num_s" << fNumContours-1 << endl;
+        for (auto bin=2; bin<=fNumContours; ++bin) {
+            fileSummary << setw(25) << ("s_error_%d",bin-1) << fValueOfS[bin] << "  " << fErrorAtS[bin] << endl;
+        }
+        fileSummary << endl;
         auto numFits = fFitArray -> GetEntries();
         for (auto iFit=0; iFit<numFits; ++iFit)
         {
@@ -499,6 +574,7 @@ void LKBeamPID::MakeSummary()
             fileSummary << setw(25) << Form("pid%d/ca_scale",iFit)           << fFinalContourAScale << endl;
             fileSummary << setw(25) << Form("pid%d/count",iFit)              << count << endl;
             fileSummary << setw(25) << Form("pid%d/contamination",iFit)      << contamination << endl;
+            fileSummary << setw(25) << Form("pid%d/contamination_error",iFit)<< contamination*fFitCountDiff->Eval(fFinalContourAScale+0.05) << endl;
             fileSummary << setw(25) << Form("pid%d/corrected",iFit)          << corrected << endl;
             fileSummary << setw(25) << Form("pid%d/purity",iFit)             << corrected/total << endl;
             fileSummary << setw(25) << Form("pid%d/amplitude",iFit)          << amplit << endl;
@@ -541,7 +617,7 @@ void LKBeamPID::MakeSummary()
     fStage = 7;
 }
 
-LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitContanminent)
+LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitContanminent, bool resetError)
 {
     gStyle->SetPaintTextFormat(".3f");
     auto amplit = fit->GetParameter(0);
@@ -550,30 +626,33 @@ LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitC
     auto valueY = fit->GetParameter(3);
     auto sigmaY = fit->GetParameter(4);
     auto thetaR = fit->GetParameter(5);
-    TString nameData = fit -> GetName(); nameData .ReplaceAll("fit_","histIntegralData_");
-    TString nameFitG = fit -> GetName(); nameFitG .ReplaceAll("fit_","histIntegralFitG_");
-    TString nameTest = fit -> GetName(); nameTest .ReplaceAll("fit_","histIntegralTest_");
-    TString nameBack = fit -> GetName(); nameBack .ReplaceAll("fit_","histIntegralBack_");
+    TString nameData = fit -> GetName(); nameData.ReplaceAll("fit_","histIntegralData_");
+    TString nameFitG = fit -> GetName(); nameFitG.ReplaceAll("fit_","histIntegralFitG_");
+    TString nameTest = fit -> GetName(); nameTest.ReplaceAll("fit_","histIntegralTest_");
+    TString nameBack = fit -> GetName(); nameBack.ReplaceAll("fit_","histIntegralBack_");
+    TString nameCalc = fit -> GetName(); nameBack.ReplaceAll("fit_","histIntegralCalc_");
     TString nameErrr = fit -> GetName(); nameErrr.ReplaceAll("fit_","histIntegralErrr_");
-    TString title = Form("[RUN %04d] (%d) Count in contour;S = Contour amplitude [A];Count",fCurrentRunNumber,idx);
+    TString title = Form("[RUN %04d] (%d) Count in contour;S = Contour amplitude scale [Amp];Count",fCurrentRunNumber,idx);
     TH1D *histData = (TH1D*) fHistDataArray -> At(idx);
     TH1D *histFitG = (TH1D*) fHistFitGArray -> At(idx);
     TH1D *histBack = (TH1D*) fHistBackArray -> At(idx);
+    TH1D *histCalc = (TH1D*) fHistCalcArray -> At(idx);
     TH1D *histTest = (TH1D*) fHistTestArray -> At(idx);
-    TH1D *histErrr = (TH1D*) fHistErrrArray -> At(idx);
+    //TH1D *histErrr = (TH1D*) fHistErrrArray -> At(idx);
+    TH2D *histErrr = (TH2D*) fHistErrrArray -> At(0);
     if (histData==nullptr)
     {
         gROOT -> cd();
         histData = new TH1D(nameData,title,fNumContours,0,1);
         histFitG = new TH1D(nameFitG,title,fNumContours,0,1);
         histBack = new TH1D(nameBack,title,fNumContours,0,1);
+        histCalc = new TH1D(nameCalc,title,fNumContours,0,1);
         histTest = new TH1D(nameTest,title,fNumContours,0,1);
-        histErrr = new TH1D(nameErrr,title,fNumContours,0,1);
         fHistDataArray -> Add(histData);
         fHistFitGArray -> Add(histFitG);
         fHistBackArray -> Add(histBack);
+        fHistCalcArray -> Add(histCalc);
         fHistTestArray -> Add(histTest);
-        fHistErrrArray -> Add(histErrr);
         histData -> SetFillColor(19);
         histData -> SetLineWidth(2);
         histData -> SetLineColor(kBlack);
@@ -584,24 +663,39 @@ LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitC
         histBack -> SetLineColor(kBlue);
         histBack -> SetLineWidth(2);
         histBack -> SetLineStyle(1);
+        histCalc -> SetLineColor(kGreen);
+        histCalc -> SetLineWidth(1);
+        histCalc -> SetLineStyle(1);
     }
     else {
         histData -> Reset("ICES");
         histFitG -> Reset("ICES");
         histBack -> Reset("ICES");
+        histCalc -> Reset("ICES");
         histTest -> Reset("ICES");
-        histErrr -> Reset("ICES");
         histData -> SetTitle(title);
         histFitG -> SetTitle(title);
         histBack -> SetTitle(title);
+        histCalc -> SetTitle(title);
         histTest -> SetTitle(title);
-        histErrr -> SetTitle(title);
         histData -> SetName(nameData);
         histFitG -> SetName(nameFitG);
-        histBack -> SetName(nameBack);
+        histBack -> SetName(nameCalc);
+        histCalc -> SetName(nameBack);
         histTest -> SetName(nameTest);
+    }
+
+    if (histErrr==nullptr) {
+        histErrr = new TH2D(nameErrr,title,fNumContours,0,1,60,-0.3,0.3);
+        fHistErrrArray -> Add(histErrr);
+    }
+    if (resetError) {
+        histErrr -> Reset("ICES");
+        TString title2 = Form("[RUN %04d] (%d);S = Contour amplitude [A];Error",fCurrentRunNumber,idx);
+        histErrr -> SetTitle(title2);
         histErrr -> SetName(nameErrr);
     }
+
     auto draw = new LKDrawing();
     draw -> SetCanvasMargin(0.15,0.05,0.1,0.1);
     draw -> SetOptStat(0);
@@ -611,8 +705,9 @@ LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitC
     if (fitContanminent!=nullptr)
         draw -> Add(histBack,"same hist","contaminent");
     draw -> Add(histFitG,"same","fit");
+    draw -> Add(histCalc,"same hist","fit+contam.");
     //draw -> Add(histTest,"same","test");
-    //draw -> Add(histErrr,"same text",".");
+    //draw -> Add(histErrr,"drawx",".");
     draw -> AddLegendLine(Form("A=%.2f",amplit));
     draw -> AddLegendLine(Form("x=%.2f",valueX));
     draw -> AddLegendLine(Form("#sigma_{x}=%.2f",sigmaX));
@@ -628,21 +723,27 @@ LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitC
         auto graphC = GetContourGraph(contourScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
         graphC -> SetName(Form("contourGraph_%.2f",contourScale));
         if (contourScale==fFinalContourAScale) fFinalContourGraph = graphC;
-        double countFitG = Integral2DGaussian(fit, contourScale*amplit);
+        double countFitG = Integral2DGaussian(fit, contourScale);
         countFitG = countFitG / binA;
-        histFitG -> SetBinContent(histFitG->GetXaxis()->FindBin(contourScale+0.5*dc),countFitG/countFullG);
+        double countCalc = countFitG;
+        double x_contour = contourScale+0.5*dc;
+        histFitG -> SetBinContent(histFitG->GetXaxis()->FindBin(x_contour),countFitG/countFullG);
         double countTest = IntegralInsideGraph(hist, graphC, fit);
         countTest = countTest;
-        histTest -> SetBinContent(histTest->GetXaxis()->FindBin(contourScale+0.5*dc),countTest/countFullG);
+        histTest -> SetBinContent(histTest->GetXaxis()->FindBin(x_contour),countTest/countFullG);
+        double countBack = 0;
         if (fitContanminent!=nullptr) {
-            double countBack = IntegralInsideGraph(hist, graphC, fitContanminent);
-            countBack = countBack;
-            histBack -> SetBinContent(histBack->GetXaxis()->FindBin(contourScale+0.5*dc),countBack/countFullG);
+            countBack = IntegralInsideGraph(hist, graphC, fitContanminent);
+            countCalc = countCalc + countBack;
+            histBack -> SetBinContent(histBack->GetXaxis()->FindBin(x_contour),countBack/countFullG);
         }
+        histCalc -> SetBinContent(histCalc->GetXaxis()->FindBin(x_contour),countCalc/countFullG);
         if (contourScale!=0) {
             double countHist = IntegralInsideGraph(hist, graphC);
-            histData -> SetBinContent(histData->GetXaxis()->FindBin(contourScale+0.5*dc),countHist/countFullG);
-            histErrr -> SetBinContent(histErrr->GetXaxis()->FindBin(contourScale+0.5*dc),abs(countHist-countFitG)/countFitG);
+            histData -> SetBinContent(histData->GetXaxis()->FindBin(x_contour),countHist/countFullG);
+            double signalRatio = countFitG/(countFitG+countBack);
+            double diff = (countHist*signalRatio-countFitG)/(countHist*signalRatio);
+            histErrr -> Fill(x_contour,diff);
         }
     }
     return draw;
@@ -679,10 +780,10 @@ TF2* LKBeamPID::Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY,
     return fit;
 }
 
-TGraph *LKBeamPID::GetContourGraph(double contoA, double amplit, double valueX, double sigmaX, double valueY, double sigmaY, double thetaR)
+TGraph *LKBeamPID::GetContourGraph(double contourAmp, double amplit, double valueX, double sigmaX, double valueY, double sigmaY, double thetaR)
 {
-    double Rx = sigmaX * sqrt(-2 * log(contoA / amplit));
-    double Ry = sigmaY * sqrt(-2 * log(contoA / amplit));
+    double Rx = sigmaX * sqrt(-2 * log(contourAmp / amplit));
+    double Ry = sigmaY * sqrt(-2 * log(contourAmp / amplit));
 
     auto graph = new TGraph();
     graph -> SetMarkerStyle(20);
@@ -742,20 +843,29 @@ double LKBeamPID::IntegralInsideGraph(TH2D* hist, TGraph* graph, TF2 *f2, bool j
     return integral;
 }
 
-double LKBeamPID::Integral2DGaussian(double amplitude, double sigma_x, double sigma_y, double contoA)
+double LKBeamPID::Integral2DGaussian(double amplitude, double sigma_x, double sigma_y, double contourS)
 {
-    return amplitude*2*TMath::Pi()*sigma_x*sigma_y*(1-contoA/amplitude);
+    double value = amplitude*2*TMath::Pi()*sigma_x*sigma_y*(1-contourS);
+    value = value * (1+fFitCountDiff->Eval(contourS+0.05));
+    return value;
 }
 
-double LKBeamPID::Integral2DGaussian(TF2 *f2, double contoA)
+double LKBeamPID::Integral2DGaussian(TF2 *f2, double contourS)
 {
-    return Integral2DGaussian(f2->GetParameter(0), f2->GetParameter(2), f2->GetParameter(4), contoA);
+    double value = Integral2DGaussian(f2->GetParameter(0), f2->GetParameter(2), f2->GetParameter(4), contourS);
+    return value;
 }
 
 void LKBeamPID::CollectRootFiles(std::vector<TString> &listGenFile, TString dataPath, TString format)
 {
     if (dataPath.IsNull()) dataPath = fDefaultPath;
     if (format.IsNull()) format = fDefaultFormat;
+
+    if (dataPath.Index("~/")==0) {
+        dataPath.Remove(0,1);
+        dataPath = TString(gSystem->Getenv("HOME")) + dataPath;
+    }
+
 
     e_info << "Looking for data files(" << format << ") in " << dataPath << endl;
     void *dirp = gSystem->OpenDirectory(dataPath);

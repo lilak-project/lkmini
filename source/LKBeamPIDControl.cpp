@@ -5,6 +5,8 @@ ClassImp(LKBeamPIDControl)
 LKBeamPIDControl::LKBeamPIDControl(UInt_t w, UInt_t h)
     : TGMainFrame(gClient->GetRoot(), w, h), fInputMode(InputMode::None), LKBeamPID()
 {
+    fName = "BeamPIDControl";
+
     SetCleanup(kDeepCleanup);
 
     if (w==0||h==0) {
@@ -68,21 +70,22 @@ LKBeamPIDControl::LKBeamPIDControl(UInt_t w, UInt_t h)
     fBtnUseCurrentgPad  = mkBtn(col1, "&3 Use gPad",       "PressedUseCurrentgPad()");
     fBtnSelectCenters   = mkBtn(col1, "&4 Select centers", "PressedSelectCenters()");
     fBtnReselectCenters = mkBtn(col1, "&5 Resel. centers", "PressedReselectCenters()");
-    fBtnFitTotal        = mkBtn(col1, "&6 Fit total",      "PressedFitTotal()");
-    fBtnMakeSummary     = mkBtn(col1, "&7 Make summary",   "PressedMakeSummary()");
+    fBtnCalibrationRun  = mkBtn(col1, "&6 Calibration",    "PressedCalibrationRun()"); 
+    fBtnFitTotal        = mkBtn(col1, "&7 Fit total",      "PressedFitTotal()");
+    fBtnMakeSummary     = mkBtn(col1, "&8 Make summary",   "PressedMakeSummary()");
 
     fBtnAutoBinning     = mkBtn(col2, "&Auto binning",     "PressedAutoBinning()");
     fBtnPrintBinning    = mkBtn(col2, "&Print binning",    "PressedPrintBinning()");
     fBtnResetBinning    = mkBtn(col2, "R&eset binning",    "PressedResetBinning()");
-    fBtnSaveBinning     = mkBtn(col2, "S&ave binning",     "PressedSaveBinning()");
+    fBtnSaveBinning     = mkBtn(col2, "Sa&ve binning",     "PressedSaveBinning()");
     fBtnSetBinWidthX    = mkBtn(col2, "Set &x-bin width",  "PressedSetXBinSize()");
     fBtnSetBinWidthY    = mkBtn(col2, "Set &y-bin width",  "PressedSetYBinSize()");
 
     fBtnHelp            = mkBtn(col3, "&Help",             "PressedHelp()");
-    fBtnSetSValue       = mkBtn(col3, "Set S &value",      "PressedSetSValue()");
+    fBtnSetSValue       = mkBtn(col3, "Set &S value",      "PressedSetSValue()");
     fBtnSetFitRange     = mkBtn(col3, "Set &fit range",    "PressedSetFitRange()");
     fBtnSetRunNumber    = mkBtn(col3, "Set &run number",   "PressedSetRunNumber()");
-    fBtnSaveConfig      = mkBtn(col3, "&Save config.",     "PressedSaveConfiguration()");
+    fBtnSaveConfig      = mkBtn(col3, "Save &config.",     "PressedSaveConfiguration()");
     fBtnQuit            = mkBtn(col3, "&Quit",             "PressedQuit()");
 
     BtNx(fBtnListFiles);
@@ -110,6 +113,7 @@ void LKBeamPIDControl::ResetBB(int col1, int col2, int col3)
         fBtnUseCurrentgPad  -> ChangeBackground(fNmColor);
         fBtnSelectCenters   -> ChangeBackground(fNmColor);
         fBtnReselectCenters -> ChangeBackground(fNmColor);
+        fBtnCalibrationRun  -> ChangeBackground(fNmColor);
         fBtnFitTotal        -> ChangeBackground(fNmColor);
         fBtnMakeSummary     -> ChangeBackground(fNmColor);
     }
@@ -135,20 +139,20 @@ void LKBeamPIDControl::ResetBB(int col1, int col2, int col3)
 void LKBeamPIDControl::BtHL(TGTextButton* b) { b -> ChangeBackground(fHLColor); }
 void LKBeamPIDControl::BtNx(TGTextButton* b) { b -> ChangeBackground(fNxColor); }
 
-void LKBeamPIDControl::PressedListFiles()         { ResetBB(1,1,1); BtHL(fBtnListFiles      ); BtNx(fBtnSelectFile   ); ListFiles();       }
-void LKBeamPIDControl::PressedSetFileNumber()     { ResetBB(1,1,1); BtHL(fBtnSelectFile     ); BtNx(fBtnSelectCenters); RequireInput(InputMode::SetFileNumber); }
-void LKBeamPIDControl::PressedUseCurrentgPad()    { ResetBB(1,1,1); BtHL(fBtnUseCurrentgPad ); BtNx(fBtnSelectCenters); UseCurrentgPad();  }
-void LKBeamPIDControl::PressedSelectCenters()     { ResetBB(1,1,1); BtHL(fBtnSelectCenters  ); BtNx(fBtnFitTotal     ); SelectCenters();   }
-void LKBeamPIDControl::PressedReselectCenters()   { ResetBB(1,1,1); BtHL(fBtnReselectCenters); BtNx(fBtnFitTotal     ); ReselectCenters(); }
-void LKBeamPIDControl::PressedFitTotal()          { ResetBB(1,1,1); BtHL(fBtnFitTotal       ); BtNx(fBtnMakeSummary  ); FitTotal();        }
-void LKBeamPIDControl::PressedMakeSummary()       { ResetBB(1,1,1); BtHL(fBtnMakeSummary    ); BtNx(fBtnListFiles    ); MakeSummary();     }
+void LKBeamPIDControl::PressedListFiles()         { ResetBB(1,1,1); BtHL(fBtnListFiles      ); ListFiles();       BtNx(fBtnSelectFile); }
+void LKBeamPIDControl::PressedSetFileNumber()     { ResetBB(1,1,1); BtHL(fBtnSelectFile     ); RequireInput(InputMode::SetFileNumber); BtNx(fBtnSelectCenters); }
+void LKBeamPIDControl::PressedUseCurrentgPad()    { ResetBB(1,1,1); BtHL(fBtnUseCurrentgPad ); UseCurrentgPad();  BtNx(fBtnSelectCenters); }
+void LKBeamPIDControl::PressedSelectCenters()     { ResetBB(1,1,1); BtHL(fBtnSelectCenters  ); SelectCenters();   BtNx(fBtnFitTotal); if (!fCalibrated) BtNx(fBtnCalibrationRun); }
+void LKBeamPIDControl::PressedReselectCenters()   { ResetBB(1,1,1); BtHL(fBtnReselectCenters); ReselectCenters(); BtNx(fBtnFitTotal); if (!fCalibrated) BtNx(fBtnCalibrationRun); }
+void LKBeamPIDControl::PressedCalibrationRun()    { ResetBB(1,1,1); BtHL(fBtnCalibrationRun ); CalibrationRun();  BtNx(fBtnReselectCenters); }
+void LKBeamPIDControl::PressedFitTotal()          { ResetBB(1,1,1); BtHL(fBtnFitTotal       ); FitTotal();        BtNx(fBtnMakeSummary); }
+void LKBeamPIDControl::PressedMakeSummary()       { ResetBB(1,1,1); BtHL(fBtnMakeSummary    ); MakeSummary();     BtNx(fBtnListFiles); }
 
 void LKBeamPIDControl::PressedHelp()              { ResetBB(0,1,1); BtHL(fBtnHelp           ); Help2(); }
 void LKBeamPIDControl::PressedSetSValue()         { ResetBB(0,1,1); BtHL(fBtnSetSValue      ); RequireInput(InputMode::SetSValue); }
 void LKBeamPIDControl::PressedSetFitRange()       { ResetBB(0,1,1); BtHL(fBtnSetFitRange    ); RequireInput(InputMode::SetFitRange); }
 void LKBeamPIDControl::PressedSetRunNumber()      { ResetBB(0,1,1); BtHL(fBtnSetRunNumber   ); RequireInput(InputMode::SetRunNumber); }
 void LKBeamPIDControl::PressedSaveConfiguration() { ResetBB(0,1,1); BtHL(fBtnSaveConfig     ); SaveConfiguration(); }
-
 
 void LKBeamPIDControl::PressedAutoBinning()       { ResetBB(0,1,1); BtHL(fBtnAutoBinning    ); AutoBinning(); }
 void LKBeamPIDControl::PressedPrintBinning()      { ResetBB(0,1,1); BtHL(fBtnPrintBinning   ); PrintBinning(); }

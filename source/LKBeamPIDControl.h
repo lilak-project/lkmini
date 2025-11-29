@@ -36,6 +36,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         void PressedSelectCenters();
         void PressedReselectCenters();
         void PressedFitTotal();
+        void PressedCalibrationRun();
         void PressedMakeSummary();
 
         void PressedHelp();
@@ -72,6 +73,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         TGTextButton *fBtnSelectCenters   = nullptr;
         TGTextButton *fBtnReselectCenters = nullptr;
         TGTextButton *fBtnFitTotal        = nullptr;
+        TGTextButton *fBtnCalibrationRun  = nullptr;
         TGTextButton *fBtnMakeSummary     = nullptr;
         TGTextButton *fBtnHelp            = nullptr;
         TGTextButton *fBtnAutoBinning     = nullptr;
