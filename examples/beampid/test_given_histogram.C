@@ -1,13 +1,13 @@
-void ha()
+void test_given_histogram()
 {
     auto file = new TFile("example_pid.root");
     TCanvas *cvs = LKPainter::GetPainter() -> CanvasResize("cvs",1,1,1);
     file -> Get("hist_pid") -> Draw();
-    LKBeamPID pid;
-    pid.SetRunNumber(83);
-    pid.UseCurrentgPad();
+    auto pid = new LKBeamPIDControl;
+    pid -> SetRunNumber(83);
+    pid -> UseCurrentgPad();
 
-    pid.SelectCenters(
+    pid -> SelectCenters(
     vector<vector<double>>{
         vector<double>{-919.906994, 144.416437},
 
@@ -16,9 +16,9 @@ void ha()
         vector<double>{-927.362903, 123.482270},
         }
     );
-    pid.CalibrationRun();
+    pid -> CalibrationRun();
 
-    pid.SelectCenters(
+    pid -> SelectCenters(
     vector<vector<double>>{
         vector<double>{-919.906994, 144.416437},
 
@@ -38,6 +38,6 @@ void ha()
         //vector<double>{-953.129665, 104.939739},
         }
     );
-    pid.FitTotal();
-    pid.MakeSummary();
+    pid -> FitTotal();
+    pid -> MakeSummary();
 }
