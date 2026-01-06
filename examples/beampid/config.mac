@@ -2,10 +2,10 @@
 fit_range                     1.500000  # fit range in unit of sigma
 x_name                        .  # x value name in tree. use "." to use default value
 y_name                        .  # y value name in tree. use "." to use default value
-num_contours                  10  # number of contours for integral test
-binning                       200,-939.999817,-920.000122, 200,118.003342,139.999115  # default x(3),y(3) binning for pid plot
+num_contours                  20  # number of contours for integral test
+binning                       150,-1025,-965, 100,90,165 # default x(3),y(3) binning for pid plot
 cut_s_value                   0.200000  # s-value (ratio compared to the gaussian amplitude) for drawing pid cut contour
-example_s_list                0.9, 0.5,  # list of s-value for contours in the pid pid. cut_s_value is automatically added to the list.
+example_s_list                #0.9, 0.5,  # list of s-value for contours in the pid pid. cut_s_value is automatically added to the list.
 data_path                     .  # path to look for the files
 file_format                   gen.root  # function will search files which end with file_format
 fit_sigma_x                   2.500000  # default initial sigma_x value
@@ -15,3 +15,5 @@ fit_amp_ratio_range           0.200000  # amplitude (+-) range in ratio
 fit_pos_ratio_range           0.100000  # position (+-) range in ratio
 fit_sigma_ratio_range         0.200000  # sigma (+-) range in ratio
 fit_theta_range               0.314159  # theta (+-) range
+text_color_dark               kBlack
+text_color_bright             kBlack

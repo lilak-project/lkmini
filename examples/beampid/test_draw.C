@@ -11,7 +11,7 @@ void test_draw()
             vector<double>{-927.347709, 123.433259},
         }
     );
-    pid -> CalibrationRun();
+    pid -> CalibratePar();
 
     pid -> SelectCenters(
         vector<vector<double>>{
