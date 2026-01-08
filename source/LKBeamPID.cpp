@@ -952,7 +952,6 @@ void LKBeamPID::CalibrateEtaMan(int iPID1, int iPID2, TF2* fitTotal)
         double t2 = v.Dot(point2 - center1) / v.Mag2();
         double dtt = t1 - t2;
         if (dtt>0) found = true;
-        lk_debug << graphDiff->GetN() << " " << dtt << " " << sValue << endl;
         graphDiff -> SetPoint(graphDiff->GetN(),dtt,sValue);
     }
     if (found==false) {
@@ -1012,6 +1011,8 @@ void LKBeamPID::MakeSummary()
             double sx = fFittingList[iPID][3];
             double sy = fFittingList[iPID][4];
             double tt = fFittingList[iPID][5];
+            double lx = sx * sqrt(-2 * log(fSelectedSValue));
+            double ly = sy * sqrt(-2 * log(fSelectedSValue));
 
             fileSummary << "####################################################" << endl;
             fileSummary << setw(30) << Form("pid_%d/svalue              ",iPID) << fBeamPIDList[iPID][1] << endl;
@@ -1046,20 +1047,20 @@ void LKBeamPID::MakeSummary()
             TString gateEquation = Form("((x-(%f))*cos(%f)+(y-(%f))*sin(%f))*((x-(%f))*cos(%f)+(y-(%f))*sin(%f))/(%f)/(%f) + ((y-(%f))*cos(%f)-(x-(%f))*sin(%f))*((y-(%f))*cos(%f)-(x-(%f))*sin(%f))/(%f)/(%f) < 1",
                     x0,tt,y0,tt,
                     x0,tt,y0,tt,
-                    sx,sx,
+                    lx,lx,
                     y0,tt,x0,tt,
                     y0,tt,x0,tt,
-                    sy,sy);
+                    ly,ly);
             fileSummary << setw(30) << Form("pid_%d/fit/gate            ",iPID) << gateEquation << endl;
             const char* xx = "%s";
             const char* yy = "%s";
             TString gateEquation2 = Form("Form(\"((%s-(%f))*cos(%f)+(%s-(%f))*sin(%f))*((%s-(%f))*cos(%f)+(%s-(%f))*sin(%f))/(%f)/(%f) + ((%s-(%f))*cos(%f)-(%s-(%f))*sin(%f))*((%s-(%f))*cos(%f)-(%s-(%f))*sin(%f))/(%f)/(%f) < 1\",xName,yName,xName,yName,yName,xName,yName,xName)",
                     xx,x0,tt,yy,y0,tt,
                     xx,x0,tt,yy,y0,tt,
-                    sx,sx,
+                    lx,lx,
                     yy,y0,tt,xx,x0,tt,
                     yy,y0,tt,xx,x0,tt,
-                    sy,sy);
+                    ly,ly);
             fileSummary << setw(30) << Form("pid_%d/fit/gate2           ",iPID) << gateEquation2 << endl;
             fileSummary << endl;
         }
