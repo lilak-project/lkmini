@@ -25,7 +25,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
             SetYBinSize,
             SetBinNX,
             SetBinNY,
-            SetSValue,
+            SetEta,
             SetFitRange,
             SetRunNumber,
             CalibrateEtaMan,
@@ -55,7 +55,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         void PressedSetYBinSize();
         void PressedSetBinNX();
         void PressedSetBinNY();
-        void PressedSetSValue();
+        void PressedSetEta();
         void PressedSetFitRange();
         void PressedSetRunNumber();
         void PressedSaveConfiguration();
@@ -98,7 +98,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         TGTextButton *fBtnSetBinWidthY    = nullptr;
         TGTextButton *fBtnSetBinNX        = nullptr;
         TGTextButton *fBtnSetBinNY        = nullptr;
-        TGTextButton *fBtnSetSValue       = nullptr;
+        TGTextButton *fBtnSetEta          = nullptr;
         TGTextButton *fBtnSetFitRange     = nullptr;
         TGTextButton *fBtnSetRunNumber    = nullptr;
         TGTextButton *fBtnSaveConfig      = nullptr;

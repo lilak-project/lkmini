@@ -86,9 +86,9 @@ LKBeamPIDControl::LKBeamPIDControl(UInt_t w, UInt_t h)
     fBtnSetBinNX        = mkBtn(col2, "Set &x-bin n",      "PressedSetBinNX()");
     fBtnSetBinNY        = mkBtn(col2, "Set &y-bin n",      "PressedSetBinNY()");
 
-    fBtnDetail          = mkBtn(col3, "&Draw Detail"       "PressedDetail()");
+    fBtnDetail          = mkBtn(col3, "&Draw Detail",      "PressedDetail()");
     fBtnHelp            = mkBtn(col3, "&Help",             "PressedHelp()");
-    fBtnSetSValue       = mkBtn(col3, "Set &Eta",          "PressedSetEta()");
+    fBtnSetEta          = mkBtn(col3, "Set &Eta",          "PressedSetEta()");
     fBtnSetFitRange     = mkBtn(col3, "Set &fit range",    "PressedSetFitRange()");
     fBtnSetRunNumber    = mkBtn(col3, "Set &run number",   "PressedSetRunNumber()");
     fBtnSaveConfig      = mkBtn(col3, "Save &config.",     "PressedSaveConfiguration()");
@@ -130,7 +130,7 @@ void LKBeamPIDControl::ResetBB(int col1, int col2, int col3)
     if (col2) {
         fBtnDetail          -> ChangeBackground(fNmColor);
         fBtnHelp            -> ChangeBackground(fNmColor);
-        fBtnSetSValue       -> ChangeBackground(fNmColor);
+        fBtnSetEta          -> ChangeBackground(fNmColor);
         fBtnSetFitRange     -> ChangeBackground(fNmColor);
         fBtnSetRunNumber    -> ChangeBackground(fNmColor);
         fBtnSaveConfig      -> ChangeBackground(fNmColor);
@@ -163,7 +163,7 @@ void LKBeamPIDControl::PressedMakeSummary()       { ResetBB(1,1,1); BtHL(fBtnMak
 
 void LKBeamPIDControl::PressedDetail()            { ResetBB(0,1,1); BtHL(fBtnDetail         ); DrawDetail(); }
 void LKBeamPIDControl::PressedHelp()              { ResetBB(0,1,1); BtHL(fBtnHelp           ); Help2(); }
-void LKBeamPIDControl::PressedSetSValue()         { ResetBB(0,1,1); BtHL(fBtnSetSValue      ); RequireInput(InputMode::SetSValue); }
+void LKBeamPIDControl::PressedSetEta()            { ResetBB(0,1,1); BtHL(fBtnSetEta         ); RequireInput(InputMode::SetEta); }
 void LKBeamPIDControl::PressedSetFitRange()       { ResetBB(0,1,1); BtHL(fBtnSetFitRange    ); RequireInput(InputMode::SetFitRange); }
 void LKBeamPIDControl::PressedSetRunNumber()      { ResetBB(0,1,1); BtHL(fBtnSetRunNumber   ); RequireInput(InputMode::SetRunNumber); }
 void LKBeamPIDControl::PressedSaveConfiguration() { ResetBB(0,1,1); BtHL(fBtnSaveConfig     ); SaveConfiguration(); }
@@ -211,7 +211,7 @@ void LKBeamPIDControl::RequireInput(InputMode mode)
         case InputMode::SetFileNumber:
             e_info << "Enter file number" << endl;
             break;
-        case InputMode::SetSValue:
+        case InputMode::SetEta:
             e_info << "Enter X bin width" << endl;
             break;
         case InputMode::SetXBinSize:
@@ -253,9 +253,9 @@ void LKBeamPIDControl::PressedEnter()
             e_info << "Select file index : " << val << endl;
             SelectFile(int(val));
             break;
-        case InputMode::SetSValue:
+        case InputMode::SetEta:
             e_info << "S value changed to " << val << endl;
-            SetSValue(val);
+            SetEta(val);
             break;
         case InputMode::SetXBinSize:
             e_info << "x-bin size changed to " << val << endl;

@@ -1043,7 +1043,7 @@ void LKBeamPID::MakeSummary()
             fileSummary << setw(30) << Form("pid_%d/fit/theta           ",iPID) << tt << endl;
             fileSummary << endl;
 
-            TString gateEquation = Form("((x-(%f))*cos(%f)+(y-(%f))*sin(%f))*((x-(%f))*cos(%f)+(y-(%f))*sin(%f))/(%f)/(%f) + ((y-(%f))*cos(%f)-(x-(%f))*sin(%f))*((y-(%f))*cos(%f)-(x-(%f))*sin(%f))/(%f)/(%f)  < 1",
+            TString gateEquation = Form("((x-(%f))*cos(%f)+(y-(%f))*sin(%f))*((x-(%f))*cos(%f)+(y-(%f))*sin(%f))/(%f)/(%f) + ((y-(%f))*cos(%f)-(x-(%f))*sin(%f))*((y-(%f))*cos(%f)-(x-(%f))*sin(%f))/(%f)/(%f) < 1",
                     x0,tt,y0,tt,
                     x0,tt,y0,tt,
                     sx,sx,
@@ -1051,6 +1051,16 @@ void LKBeamPID::MakeSummary()
                     y0,tt,x0,tt,
                     sy,sy);
             fileSummary << setw(30) << Form("pid_%d/fit/gate            ",iPID) << gateEquation << endl;
+            const char* xx = "%s";
+            const char* yy = "%s";
+            TString gateEquation2 = Form("Form(\"((%s-(%f))*cos(%f)+(%s-(%f))*sin(%f))*((%s-(%f))*cos(%f)+(%s-(%f))*sin(%f))/(%f)/(%f) + ((%s-(%f))*cos(%f)-(%s-(%f))*sin(%f))*((%s-(%f))*cos(%f)-(%s-(%f))*sin(%f))/(%f)/(%f) < 1\",xName,yName,xName,yName,yName,xName,yName,xName)",
+                    xx,x0,tt,yy,y0,tt,
+                    xx,x0,tt,yy,y0,tt,
+                    sx,sx,
+                    yy,y0,tt,xx,x0,tt,
+                    yy,y0,tt,xx,x0,tt,
+                    sy,sy);
+            fileSummary << setw(30) << Form("pid_%d/fit/gate2           ",iPID) << gateEquation2 << endl;
             fileSummary << endl;
         }
     }

@@ -72,6 +72,7 @@ class LKBeamPID
         void ResetBinning();
         void SaveBinning();
         void SetSValue(double scale=-1);
+        void SetEta(double scale=-1) { SetSValue(scale); }
         void SetXBinSize(double w, int fill=0);
         void SetYBinSize(double w, int fill=0);
         void SetGausFitRange(double sigDist=-1);
