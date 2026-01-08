@@ -14,6 +14,8 @@
 #include "TSystem.h"
 #include "TStyle.h"
 #include "TGraph.h"
+#include "TLatex.h"
+#include "TText.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TH2D.h"
@@ -45,12 +47,14 @@ class LKBeamPID
         void Redraw();
         void ReselectCenters();
         void FitTotal(int mode = 0);
+        void CalibrateParFast();
         void CalibratePar() { FitTotal(1); }
         void CalibrateCnt() { FitTotal(2); }
         void CalibrateEta() { FitTotal(3); }
         void MakeSummary();
 
         void CalibrateEtaMan(int iPID1, int iPID2, TF2* fitTotal = (TF2*)nullptr);
+        void DrawDetail();
 
         LKDrawing* GetFitTestDrawing(int iPID, TH2D *hist, TF2* fit, TF2* fitContanminent=(TF2*)nullptr, bool resetError=false);
         void EvaluateCounts(double parameters[6], double countData[6], int iPID, bool isSelectedSValue, double sValue, double binArea, TH2D* hist, TF2* fit, TF2* fitContanminent=(TF2*)nullptr);
@@ -135,6 +139,7 @@ class LKBeamPID
         int fFrameIndex = 0;
         int fDarkColorText = kBlack;
         int fBrightColorText = kGreen;
+        int fLegendFillStyle = 3001;
 
         vector<vector<double>> fBeamPIDList;
         vector<vector<double>> fFittingList;

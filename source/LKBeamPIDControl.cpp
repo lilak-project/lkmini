@@ -70,24 +70,25 @@ LKBeamPIDControl::LKBeamPIDControl(UInt_t w, UInt_t h)
     fBtnUseCurrentgPad  = mkBtn(col1, "&3 Use gPad",       "PressedUseCurrentgPad()");
     fBtnSelectCenters   = mkBtn(col1, "&4 Select centers", "PressedSelectCenters()");
     fBtnReselectCenters = mkBtn(col1, "&5 Resel. centers", "PressedReselectCenters()");
-    fBtnCalibratePar    = mkBtn(col1, "&6 Calibrate par.", "PressedCalibratePar()"); 
-    fBtnCalibrateCnt    = mkBtn(col1, "&7 Calibrate count","PressedCalibrateCnt()"); 
-    fBtnCalibrateEta    = mkBtn(col1, "&8 Calibrate eta",  "PressedCalibrateEta()"); 
-    fBtnCalibrateEtaMan = mkBtn(col1, "&9 Cal. eta manual","PressedCalibrateEtaMan()"); 
+    fBtnCalibratePar    = mkBtn(col1, "&6 Calib. par.",    "PressedCalibratePar()"); 
+    fBtnCalibrateEta    = mkBtn(col1, "&7 Calib. eta",     "PressedCalibrateEta()"); 
+    fBtnCalibrateEtaMan = mkBtn(col1, "&8 Calib. eta*",    "PressedCalibrateEtaMan()"); 
+    fBtnCalibrateCnt    = mkBtn(col1, "&9 Calib. count",   "PressedCalibrateCnt()"); 
     fBtnFitTotal        = mkBtn(col1, "&0 Fit total",      "PressedFitTotal()");
     fBtnMakeSummary     = mkBtn(col1, "&- Make summary",   "PressedMakeSummary()");
 
     fBtnAutoBinning     = mkBtn(col2, "&Auto binning",     "PressedAutoBinning()");
     fBtnPrintBinning    = mkBtn(col2, "&Print binning",    "PressedPrintBinning()");
-    fBtnResetBinning    = mkBtn(col2, "R&eset binning",    "PressedResetBinning()");
-    fBtnSaveBinning     = mkBtn(col2, "Sa&ve binning",     "PressedSaveBinning()");
+    fBtnResetBinning    = mkBtn(col2, "Reset binning",     "PressedResetBinning()");
+    fBtnSaveBinning     = mkBtn(col2, "Save binning",      "PressedSaveBinning()");
     fBtnSetBinWidthX    = mkBtn(col2, "Set x-bin width",   "PressedSetXBinSize()");
     fBtnSetBinWidthY    = mkBtn(col2, "Set y-bin width",   "PressedSetYBinSize()");
     fBtnSetBinNX        = mkBtn(col2, "Set &x-bin n",      "PressedSetBinNX()");
     fBtnSetBinNY        = mkBtn(col2, "Set &y-bin n",      "PressedSetBinNY()");
 
+    fBtnDetail          = mkBtn(col3, "&Draw Detail"       "PressedDetail()");
     fBtnHelp            = mkBtn(col3, "&Help",             "PressedHelp()");
-    fBtnSetSValue       = mkBtn(col3, "Set &S value",      "PressedSetSValue()");
+    fBtnSetSValue       = mkBtn(col3, "Set &Eta",          "PressedSetEta()");
     fBtnSetFitRange     = mkBtn(col3, "Set &fit range",    "PressedSetFitRange()");
     fBtnSetRunNumber    = mkBtn(col3, "Set &run number",   "PressedSetRunNumber()");
     fBtnSaveConfig      = mkBtn(col3, "Save &config.",     "PressedSaveConfiguration()");
@@ -127,6 +128,7 @@ void LKBeamPIDControl::ResetBB(int col1, int col2, int col3)
     }
 
     if (col2) {
+        fBtnDetail          -> ChangeBackground(fNmColor);
         fBtnHelp            -> ChangeBackground(fNmColor);
         fBtnSetSValue       -> ChangeBackground(fNmColor);
         fBtnSetFitRange     -> ChangeBackground(fNmColor);
@@ -150,15 +152,16 @@ void LKBeamPIDControl::BtNx(TGTextButton* b) { b -> ChangeBackground(fNxColor); 
 void LKBeamPIDControl::PressedListFiles()         { ResetBB(1,1,1); BtHL(fBtnListFiles      ); ListFiles();       BtNx(fBtnSelectFile); }
 void LKBeamPIDControl::PressedSetFileNumber()     { ResetBB(1,1,1); BtHL(fBtnSelectFile     ); RequireInput(InputMode::SetFileNumber); BtNx(fBtnSelectCenters); }
 void LKBeamPIDControl::PressedUseCurrentgPad()    { ResetBB(1,1,1); BtHL(fBtnUseCurrentgPad ); UseCurrentgPad();  BtNx(fBtnSelectCenters); }
-void LKBeamPIDControl::PressedSelectCenters()     { ResetBB(1,1,1); BtHL(fBtnSelectCenters  ); SelectCenters();   BtNx(fBtnFitTotal); BtNx(fBtnCalibratePar); BtNx(fBtnCalibrateCnt); BtNx(fBtnCalibrateEta); }
-void LKBeamPIDControl::PressedReselectCenters()   { ResetBB(1,1,1); BtHL(fBtnReselectCenters); ReselectCenters(); BtNx(fBtnFitTotal); BtNx(fBtnCalibratePar); BtNx(fBtnCalibrateCnt); BtNx(fBtnCalibrateEta); }
-void LKBeamPIDControl::PressedCalibratePar()      { ResetBB(1,1,1); BtHL(fBtnCalibratePar   ); CalibratePar();    BtNx(fBtnReselectCenters); BtNx(fBtnCalibrateCnt); BtNx(fBtnCalibrateEta); BtNx(fBtnFitTotal); }
-void LKBeamPIDControl::PressedCalibrateCnt()      { ResetBB(1,1,1); BtHL(fBtnCalibrateCnt   ); CalibrateCnt();    BtNx(fBtnReselectCenters); BtNx(fBtnCalibrateEta); BtNx(fBtnFitTotal); }
+void LKBeamPIDControl::PressedSelectCenters()     { ResetBB(1,1,1); BtHL(fBtnSelectCenters  ); SelectCenters();   BtNx(fBtnFitTotal); BtNx(fBtnReselectCenters); BtNx(fBtnCalibratePar); }
+void LKBeamPIDControl::PressedReselectCenters()   { ResetBB(1,1,1); BtHL(fBtnReselectCenters); ReselectCenters(); BtNx(fBtnFitTotal); BtNx(fBtnCalibratePar); BtNx(fBtnCalibrateCnt); BtNx(fBtnCalibrateEta); BtNx(fBtnCalibrateEtaMan); }
+void LKBeamPIDControl::PressedCalibratePar()      { ResetBB(1,1,1); BtHL(fBtnCalibratePar   ); CalibrateParFast();BtNx(fBtnReselectCenters); BtNx(fBtnCalibrateCnt); BtNx(fBtnCalibrateEta); BtNx(fBtnCalibrateEtaMan); BtNx(fBtnFitTotal); }
+void LKBeamPIDControl::PressedCalibrateCnt()      { ResetBB(1,1,1); BtHL(fBtnCalibrateCnt   ); CalibrateCnt();    BtNx(fBtnReselectCenters); BtNx(fBtnCalibrateEta); BtNx(fBtnCalibrateEtaMan); BtNx(fBtnFitTotal); }
 void LKBeamPIDControl::PressedCalibrateEta()      { ResetBB(1,1,1); BtHL(fBtnCalibrateEta   ); CalibrateEta();    BtNx(fBtnReselectCenters); BtNx(fBtnFitTotal); }
-void LKBeamPIDControl::PressedCalibrateEtaMan()   { ResetBB(1,1,1); BtHL(fBtnCalibrateEtaMan); RequireInput(InputMode::CalibrateEtaMan); BtNx(fBtnReselectCenters); }
-void LKBeamPIDControl::PressedFitTotal()          { ResetBB(1,1,1); BtHL(fBtnFitTotal       ); FitTotal();        BtNx(fBtnMakeSummary); }
+void LKBeamPIDControl::PressedCalibrateEtaMan()   { ResetBB(1,1,1); BtHL(fBtnCalibrateEtaMan); RequireInput(InputMode::CalibrateEtaMan); BtNx(fBtnReselectCenters); BtNx(fBtnFitTotal); }
+void LKBeamPIDControl::PressedFitTotal()          { ResetBB(1,1,1); BtHL(fBtnFitTotal       ); FitTotal();        BtNx(fBtnMakeSummary); BtNx(fBtnReselectCenters); }
 void LKBeamPIDControl::PressedMakeSummary()       { ResetBB(1,1,1); BtHL(fBtnMakeSummary    ); MakeSummary();     BtNx(fBtnListFiles); }
 
+void LKBeamPIDControl::PressedDetail()            { ResetBB(0,1,1); BtHL(fBtnDetail         ); DrawDetail(); }
 void LKBeamPIDControl::PressedHelp()              { ResetBB(0,1,1); BtHL(fBtnHelp           ); Help2(); }
 void LKBeamPIDControl::PressedSetSValue()         { ResetBB(0,1,1); BtHL(fBtnSetSValue      ); RequireInput(InputMode::SetSValue); }
 void LKBeamPIDControl::PressedSetFitRange()       { ResetBB(0,1,1); BtHL(fBtnSetFitRange    ); RequireInput(InputMode::SetFitRange); }

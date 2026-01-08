@@ -35,7 +35,7 @@ LKBeamPID::LKBeamPID()
     fFitCountDiff3 -> SetLineStyle(3);
 
     InitParameters();
-    fGroupFit -> Draw();
+    //fGroupFit -> Draw();
 }
 
 void LKBeamPID::InitParameters()
@@ -64,6 +64,7 @@ void LKBeamPID::InitParameters()
     par.UpdatePar(fThetaRange,         "fit_theta_range");
     if (par.CheckPar("text_color_dark"))   fDarkColorText   = par.GetParColor("text_color_dark");
     if (par.CheckPar("text_color_bright")) fBrightColorText = par.GetParColor("text_color_bright");
+    par.UpdatePar(fLegendFillStyle,    "legend_fill_style");
 
     fCompareSValueList = par.InitPar(fCompareSValueList, "compare_s_values");
     fCompareSValueList = par.InitPar(fCompareSValueList, "compare_eta_values");
@@ -263,7 +264,7 @@ void LKBeamPID::CreateAndFillHistogram(int printb)
         fHistPID -> SetTitle(Form("RUN %04d",fCurrentRunNumber));
         fDraw2D -> Clear();
         fDraw2D -> Add(fHistPID, "colz");
-        fDraw2D -> SetStatsFillStyle(3001);
+        fDraw2D -> SetStatsFillStyle(fLegendFillStyle);
         fDraw2D -> Print(); // XXX
         fStage = 3;
         fBeamPIDList[0][0] = fHistPID->GetEntries();
@@ -416,7 +417,7 @@ void LKBeamPID::SelectCenters(vector<vector<double>> points)
                 graphC2 -> SetName(Form("graphC2_%d_S%s",iPID,LKMisc::RemoveTrailing0(100*sValue,1).Data()));
                 graphC2 -> SetLineColor(kGreen);
                 graphC2 -> SetLineStyle(9);
-                fDraw2D -> Add(graphC2,"samel");
+                //fDraw2D -> Add(graphC2,"samel");
             }
             fFittingList[iPID][0] = amplit; // 0 amplitude
             fFittingList[iPID][1] = valueX; // 1 valueX
@@ -426,13 +427,100 @@ void LKBeamPID::SelectCenters(vector<vector<double>> points)
             fFittingList[iPID][5] = thetaR; // 5 theta
         }
     }
-    fGroupFit -> Draw();
+    //fGroupFit -> Draw();
     fDraw2D -> Draw();
 
     Help("rqf");
 
     fStage = 5;
     return;
+}
+
+void LKBeamPID::CalibrateParFast()
+{
+    fGroupFit -> Clear();
+    double sigmaX1 = DBL_MAX;
+    double sigmaX2 = 0;
+    double sigmaY1 = DBL_MAX;
+    double sigmaY2 = 0;
+    double thetaR1 = DBL_MAX;
+    double thetaR2 = 0;
+    auto numPIDs = fPIDFitArray -> GetEntries();
+    for (auto iPID=0; iPID<numPIDs; ++iPID)
+    {
+        auto fit = (TF2*) fPIDFitArray -> At(iPID);
+        auto amplit = fit->GetParameter(0);
+        auto valueX = fit->GetParameter(1);
+        auto valueY = fit->GetParameter(2);
+        auto sigmaX = fit->GetParameter(3);
+        auto sigmaY = fit->GetParameter(4);
+        auto thetaR = fit->GetParameter(5);
+        if (sigmaX<sigmaX1) sigmaX1 = sigmaX;
+        if (sigmaX>sigmaX2) sigmaX2 = sigmaX;
+        if (sigmaY<sigmaY1) sigmaY1 = sigmaY;
+        if (sigmaY>sigmaY2) sigmaY2 = sigmaY;
+        if (thetaR<thetaR1) thetaR1 = thetaR;
+        if (thetaR>thetaR2) thetaR2 = thetaR;
+    }
+    auto hist_sigmaX = new TH1D(Form("sigmaX_%04d_%d",fCurrentRunNumber,fFrameIndex++),"",20,0,1.2*sigmaX2);
+    auto hist_sigmaY = new TH1D(Form("sigmaY_%04d_%d",fCurrentRunNumber,fFrameIndex++),"",20,0,1.2*sigmaY2);
+    auto hist_thetaR = new TH1D(Form("thetaR_%04d_%d",fCurrentRunNumber,fFrameIndex++),"",20,0,1.2*thetaR2);
+    auto hist_sigmaX2 = new TH2D(Form("sigmaX2_%04d_%d",fCurrentRunNumber,fFrameIndex++),"",20,fBnn1.y1(),fBnn1.y2(),20,0,1.2*sigmaX2);
+    auto hist_sigmaY2 = new TH2D(Form("sigmaY2_%04d_%d",fCurrentRunNumber,fFrameIndex++),"",20,fBnn1.y1(),fBnn1.y2(),20,0,1.2*sigmaY2);
+    auto hist_thetaR2 = new TH2D(Form("thetaR2_%04d_%d",fCurrentRunNumber,fFrameIndex++),"",20,fBnn1.y1(),fBnn1.y2(),20,0,1.2*thetaR2);
+    fGroupFit -> AddHist(hist_sigmaX);
+    fGroupFit -> AddHist(hist_sigmaY);
+    fGroupFit -> AddHist(hist_thetaR);
+    fGroupFit -> AddHist(hist_sigmaX2);
+    fGroupFit -> AddHist(hist_sigmaY2);
+    fGroupFit -> AddHist(hist_thetaR2);
+    for (auto iPID=0; iPID<numPIDs; ++iPID)
+    {
+        auto fit = (TF2*) fPIDFitArray -> At(iPID);
+        auto amplit = fit->GetParameter(0);
+        auto valueX = fit->GetParameter(1);
+        auto valueY = fit->GetParameter(2);
+        auto sigmaX = fit->GetParameter(3);
+        auto sigmaY = fit->GetParameter(4);
+        auto thetaR = fit->GetParameter(5);
+        hist_sigmaX -> Fill(sigmaX);
+        hist_sigmaY -> Fill(sigmaY);
+        hist_thetaR -> Fill(thetaR);
+        hist_sigmaX2 -> Fill(valueY,sigmaX);
+        hist_sigmaY2 -> Fill(valueY,sigmaY);
+        hist_thetaR2 -> Fill(valueY,thetaR);
+    }
+
+    {
+        fFixSigmaX = hist_sigmaX -> GetMean();
+        fFixSigmaY = hist_sigmaY -> GetMean();
+        fFixThetaR = hist_thetaR -> GetMean();
+        //lk_debug << "<sigmaX> = " << fFixSigmaX << endl;
+        //lk_debug << "<sigmaY> = " << fFixSigmaY << endl;
+        //lk_debug << "<thetaR> = " << fFixThetaR << endl;
+
+        if (fGraphTTOutTTIn==nullptr) {
+            fGraphTTOutTTIn = new TGraph();
+            fGraphTTOutTTIn -> SetMarkerStyle(20);
+            fGraphTTOutTTIn -> SetMarkerSize(0.5);
+        }
+        else {
+            fGraphTTOutTTIn -> Clear();
+            fGraphTTOutTTIn -> Set(0);
+        }
+        auto drawTT = fGroupFit -> CreateDrawing();
+        drawTT -> Add(fGraphTTOutTTIn,"pl");
+        drawTT -> SetCreateFrame(Form("tt_%d",fFrameIndex++),";theta_{out};theta_{in}");
+        for (double theta=-TMath::Pi(); theta<TMath::Pi(); theta+=0.1) {
+            double Rx = fFixSigmaX * sqrt(-2 * log(fSelectedSValue));
+            double Ry = fFixSigmaY * sqrt(-2 * log(fSelectedSValue));
+            double pointX = Rx * cos(theta);
+            double pointY = Ry * sin(theta);
+            TVector3 point(pointX,pointY,0);
+            fGraphTTOutTTIn -> SetPoint(fGraphTTOutTTIn->GetN(),point.Phi(),theta);
+        }
+    }
+    //fGroupFit -> Draw();
 }
 
 void LKBeamPID::FitTotal(int mode)
@@ -515,7 +603,6 @@ void LKBeamPID::FitTotal(int mode)
                 double parval = fit -> GetParameter(ipar);
                 double parmin, parmax;
                 fit -> GetParLimits(ipar, parmin, parmax);
-                lk_debug << parval << " " << parmin << " -> " << parmax << endl;
             }
         }
         if (calibratePar==false) {
@@ -545,6 +632,7 @@ void LKBeamPID::FitTotal(int mode)
     auto legend = new TLegend();
     legend -> SetFillStyle(3001);
     legend -> SetMargin(0.1);
+    legend -> AddEntry((TObject*)nullptr,Form("#eta = %.2f",fSelectedSValue),"");
     for (auto iPID=0; iPID<numPIDs; ++iPID)
     {
         auto fit = (TF2*) fPIDFitArray -> At(iPID);
@@ -643,6 +731,7 @@ void LKBeamPID::FitTotal(int mode)
                     TVector3 center1(valueX1,valueY1,0);
                     TVector3 center2(valueX2,valueY2,0);
                     TVector3 v = center2 - center1;
+                    v.Print();
                     double t1 = v.Dot(point1 - center1) / v.Mag2();
                     double t2 = v.Dot(point2 - center1) / v.Mag2();
                     double dtt = t1 - t2;
@@ -807,12 +896,16 @@ void LKBeamPID::FitTotal(int mode)
         //fDraw2D -> SetCreateLegend();
         fDraw2D -> SetLegendCorner(1);
         fDraw2D -> Add(legend);
-        fGroupFit -> Draw();
+        //fGroupFit -> Draw();
         fDraw2D -> Draw();
 
         Help("rqg");
         fStage = 6;
     }
+}
+
+void LKBeamPID::DrawDetail() {
+    fGroupFit -> Draw();
 }
 
 void LKBeamPID::CalibrateEtaMan(int iPID1, int iPID2, TF2* fitTotal)
@@ -843,6 +936,7 @@ void LKBeamPID::CalibrateEtaMan(int iPID1, int iPID2, TF2* fitTotal)
     auto drawDiff = fGroupFit -> CreateDrawing();
     drawDiff -> Add(graphDiff,"pl");
     drawDiff -> SetCreateFrame(Form("diff_%d",fFrameIndex++),";diff;eta");
+    bool found = false;
     for (double sValue=0.01; sValue<1; sValue+=0.01)
     {
         auto Rxi = sigmaX * sqrt(-2 * log(sValue));
@@ -857,10 +951,19 @@ void LKBeamPID::CalibrateEtaMan(int iPID1, int iPID2, TF2* fitTotal)
         double t1 = v.Dot(point1 - center1) / v.Mag2();
         double t2 = v.Dot(point2 - center1) / v.Mag2();
         double dtt = t1 - t2;
+        if (dtt>0) found = true;
+        lk_debug << graphDiff->GetN() << " " << dtt << " " << sValue << endl;
         graphDiff -> SetPoint(graphDiff->GetN(),dtt,sValue);
     }
-    fSelectedSValue = graphDiff -> Eval(0);
-    e_info << "Calibrated eta value = " << fSelectedSValue << endl;
+    if (found==false) {
+        fSelectedSValue = 0.01;
+        lk_debug << "Eta is too small! Setting eta value to " << fSelectedSValue << endl;
+        lk_debug << "Manually set eta if you want to use lower value" << endl;
+    }
+    else {
+        fSelectedSValue = graphDiff -> Eval(0);
+        e_info << "Calibrated eta value = " << fSelectedSValue << endl;
+    }
     fCalibratedEta = true;
 }
 
@@ -894,10 +997,22 @@ void LKBeamPID::MakeSummary()
             fileSummary << setw(25) << Form("s_error_%d",bin-1) << fValueOfS[bin] << "  " << fErrorAtS[bin] << endl;
         }
         fileSummary << endl;
+
+        fileSummary << setw(25) << "xname " << fXName << endl;
+        fileSummary << setw(25) << "yname " << fYName << endl;
+        fileSummary << endl;
+
         TString compareSValString; for (auto s : fCompareSValueList) compareSValString = compareSValString + LKMisc::RemoveTrailing0(s) + ", "; compareSValString.Remove(compareSValString.Sizeof()-2);
         auto numPIDs = fPIDFitArray -> GetEntries();
         for (auto iPID=0; iPID<numPIDs; ++iPID)
         {
+            double aa = fFittingList[iPID][0];
+            double x0 = fFittingList[iPID][1];
+            double y0 = fFittingList[iPID][2];
+            double sx = fFittingList[iPID][3];
+            double sy = fFittingList[iPID][4];
+            double tt = fFittingList[iPID][5];
+
             fileSummary << "####################################################" << endl;
             fileSummary << setw(30) << Form("pid_%d/svalue              ",iPID) << fBeamPIDList[iPID][1] << endl;
             fileSummary << setw(30) << Form("pid_%d/count/total         ",iPID) << fBeamPIDList[iPID][0] << endl;
@@ -920,12 +1035,22 @@ void LKBeamPID::MakeSummary()
             fileSummary << setw(30) << Form("pid_%d/compare_2/syst/perc ",iPID) << fCompareList[iPID][5]/fBeamPIDList[iPID][2]*100 << endl;
             fileSummary << endl;
 
-            fileSummary << setw(30) << Form("pid_%d/fit/amplitude       ",iPID) << fFittingList[iPID][0] << endl;
-            fileSummary << setw(30) << Form("pid_%d/fit/valueX          ",iPID) << fFittingList[iPID][1] << endl;
-            fileSummary << setw(30) << Form("pid_%d/fit/valueY          ",iPID) << fFittingList[iPID][2] << endl;
-            fileSummary << setw(30) << Form("pid_%d/fit/sigmaX          ",iPID) << fFittingList[iPID][3] << endl;
-            fileSummary << setw(30) << Form("pid_%d/fit/sigmaY          ",iPID) << fFittingList[iPID][4] << endl;
-            fileSummary << setw(30) << Form("pid_%d/fit/theta           ",iPID) << fFittingList[iPID][5] << endl;
+            fileSummary << setw(30) << Form("pid_%d/fit/amplitude       ",iPID) << aa << endl;
+            fileSummary << setw(30) << Form("pid_%d/fit/valueX          ",iPID) << x0 << endl;
+            fileSummary << setw(30) << Form("pid_%d/fit/valueY          ",iPID) << y0 << endl;
+            fileSummary << setw(30) << Form("pid_%d/fit/sigmaX          ",iPID) << sx << endl;
+            fileSummary << setw(30) << Form("pid_%d/fit/sigmaY          ",iPID) << sy << endl;
+            fileSummary << setw(30) << Form("pid_%d/fit/theta           ",iPID) << tt << endl;
+            fileSummary << endl;
+
+            TString gateEquation = Form("((x-(%f))*cos(%f)+(y-(%f))*sin(%f))*((x-(%f))*cos(%f)+(y-(%f))*sin(%f))/(%f)/(%f) + ((y-(%f))*cos(%f)-(x-(%f))*sin(%f))*((y-(%f))*cos(%f)-(x-(%f))*sin(%f))/(%f)/(%f)  < 1",
+                    x0,tt,y0,tt,
+                    x0,tt,y0,tt,
+                    sx,sx,
+                    y0,tt,x0,tt,
+                    y0,tt,x0,tt,
+                    sy,sy);
+            fileSummary << setw(30) << Form("pid_%d/fit/gate            ",iPID) << gateEquation << endl;
             fileSummary << endl;
         }
     }

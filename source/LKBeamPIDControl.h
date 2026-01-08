@@ -59,6 +59,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         void PressedSetFitRange();
         void PressedSetRunNumber();
         void PressedSaveConfiguration();
+        void PressedDetail();
 
         void PressedEnter();
         void PressedQuit();
@@ -87,6 +88,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         TGTextButton *fBtnCalibrateEta    = nullptr;
         TGTextButton *fBtnCalibrateEtaMan = nullptr;
         TGTextButton *fBtnMakeSummary     = nullptr;
+        TGTextButton *fBtnDetail          = nullptr;
         TGTextButton *fBtnHelp            = nullptr;
         TGTextButton *fBtnAutoBinning     = nullptr;
         TGTextButton *fBtnPrintBinning    = nullptr;
