@@ -1,19 +1,38 @@
 # config.mac created from LKParameterContainer::Print
-fit_range                     1.500000  # fit range in unit of sigma
+## LKBeamPID configuration file
+
+## eta values
+eta                           0.2  # eta (ratio compared to the gaussian amplitude) for drawing pid cut contour
+draw_eta_list                 0.9, 0.5,  # list of eta for contours in the pid pid in addition to the parameter "eta".
+compare_eta_list              0.25, 0.15,  # these eta values will calculate the statistics information in the summary file in addition to the parameter "eta". maximum of two
+
+## parameters for drawing histograms from the tree
+data_path                     ./  # path to look for the files
+file_format                   gen.root  # function will search files which end with this value
 x_name                        .  # x value name in tree. use "." to use default value
 y_name                        .  # y value name in tree. use "." to use default value
+binning                       800,-1025.000000,-875.000000, 800,0.000000,200.000000  # default x(3), y(3) binning for pid plot
+
+## parameter settings
+init_sigma_x                  2.5  # default initial sigma_x value
+init_sigma_y                  1.5  # default initial sigma_y value
+init_theta                    21.  # default initial theta value
+fix_sigma_x                   -1  # fix sigma_x value, the shape parameter fit will not change the value if set >=0
+fix_sigma_y                   -1  # fix sigma_y vanot change the value if set >=0
+fix_theta                     -1  # fix theta vanot change the value if set >=0
+
+## fitting configuration
+fit_amp_ratio_range           0.2  # amplitude (+-) range in ratio. Used to limit the parameter range when fitting
+fit_pos_ratio_range           0.1  # position (+-) range in ratio. Used to limit the parameter range when fitting
+fit_sigma_ratio_range         0.2  # sigma (+-) range in ratio. Used to limit the parameter range when fitting
+fit_theta_range               0.314159  # theta (+-) range. Used to limit the parameter range when fitting
+fit_range                     1.  # the PID fit range will be chosen using this value by [fit_range]*[init_sigma]
+
+## drawing configuration
+contour_color                 632  # set the color of the contour in the drawing. default is kRed
+text_color_dark               1  # text color of the index number of the pid for [pid_amplit]>=0.3*[hist_max]
+text_color_bright             416  # text color of the index number of the pid for [pid_amplit]< 0.3*[hist_max]
+legend_fill_style             3001  # fill style for the legend containing pid index and count information
+
+## else
 num_contours                  20  # number of contours for integral test
-binning                       150,-1025,-965, 100,90,165 # default x(3),y(3) binning for pid plot
-cut_s_value                   0.200000  # s-value (ratio compared to the gaussian amplitude) for drawing pid cut contour
-example_s_list                #0.9, 0.5,  # list of s-value for contours in the pid pid. cut_s_value is automatically added to the list.
-data_path                     .  # path to look for the files
-file_format                   gen.root  # function will search files which end with file_format
-fit_sigma_x                   2.500000  # default initial sigma_x value
-fit_sigma_y                   1.500000  # default initial sigma_y value
-fit_theta                     21.000000  # default initial theta value
-fit_amp_ratio_range           0.200000  # amplitude (+-) range in ratio
-fit_pos_ratio_range           0.100000  # position (+-) range in ratio
-fit_sigma_ratio_range         0.200000  # sigma (+-) range in ratio
-fit_theta_range               0.314159  # theta (+-) range
-text_color_dark               kBlack
-text_color_bright             kBlack

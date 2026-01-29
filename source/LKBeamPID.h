@@ -57,7 +57,7 @@ class LKBeamPID
         void DrawDetail();
 
         LKDrawing* GetFitTestDrawing(int iPID, TH2D *hist, TF2* fit, TF2* fitContanminent=(TF2*)nullptr, bool resetError=false);
-        void EvaluateCounts(double parameters[6], double countData[6], int iPID, bool isSelectedSValue, double sValue, double binArea, TH2D* hist, TF2* fit, TF2* fitContanminent=(TF2*)nullptr);
+        void EvaluateCounts(double parameters[6], double countData[6], int iPID, bool isSelectedEta, double sValue, double binArea, TH2D* hist, TF2* fit, TF2* fitContanminent=(TF2*)nullptr);
         TF2* Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY, double sigmaX=0, double sigmaY=0, double theta=0);
         TGraph *GetContourGraph(double sValue, double amplit, double valueX, double sigmaX, double valueY, double sigmaY, double thetaR);
         double IntegralInsideGraph(TH2D* hist, TGraph* graph, bool justCount=true);
@@ -72,7 +72,7 @@ class LKBeamPID
         void ResetBinning();
         void SaveBinning();
         void SetSValue(double scale=-1);
-        void SetEta(double scale=-1) { SetSValue(scale); }
+        void SetEta(double scale=-1);
         void SetXBinSize(double w, int fill=0);
         void SetYBinSize(double w, int fill=0);
         void SetGausFitRange(double sigDist=-1);
@@ -134,12 +134,13 @@ class LKBeamPID
         double fFixSigmaY = -1;
         double fFixThetaR = -1;
         int fNumContours = 20;
-        double fSelectedSValue = 0.2;
-        vector<double> fCompareSValueList;
-        vector<double> fSValueList = {0.9,0.5};
+        double fSelectedEta = 0.2;
+        vector<double> fCompareEtaList;
+        vector<double> fDrawEtaList = {0.9,0.5};
         int fFrameIndex = 0;
-        int fDarkColorText = kBlack;
-        int fBrightColorText = kGreen;
+        int fContourColor = kRed;
+        int fPIDIndexTextColor1 = kBlack;
+        int fPIDIndexTextColor2 = kGreen;
         int fLegendFillStyle = 3001;
 
         vector<vector<double>> fBeamPIDList;
